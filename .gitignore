@@ -8,6 +8,17 @@ node_modules/
 .playwright-cli/
 .DS_Store
 
-# 防御性排除（用户要求：AI 过程文件与 Obsidian 不入库）
-.obsidian/
+# AI 工具过程文件（用户要求：一律不入库）
 .claude/
+.claude*
+CLAUDE.md
+AGENTS.md
+.codex/
+.cursor/
+.cursorrules
+.windsurf/
+.aider*
+.gemini/
+# Obsidian 笔记（用户要求：不入库）
+.obsidian/
+*.canvas
