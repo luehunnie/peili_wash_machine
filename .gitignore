@@ -1,1 +1,9 @@
+# 构建产物（T5 由 GitHub Actions 现场构建部署）
+dist/
+
+# 依赖
+node_modules/
+
+# 本地工具缓存
+.playwright-cli/
 .DS_Store

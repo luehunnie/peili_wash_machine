@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>参考稿 V1 · 清爽生活蓝「培黎洗衣速查」（定稿候选）</title>
+<style>
+  :root {
+    --bg: #eef3f8;
+    --card: #ffffff;
+    --ink: #17293c;
+    --sub: #5c6f82;
+    --faint: #9db0c2;
+    --line: #e3eaf2;
+    --primary: #2e7df0;
+    --primary-soft: #e5effe;
+    --idle: #17a35c;
+    --idle-soft: #e2f6ec;
+    --busy: #e8951f;
+    --busy-soft: #fdf1dc;
+    --fault: #a7b1bc;
+    --fault-soft: #f0f3f6;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #dfe7ef;
+    color: var(--ink);
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 414px; margin: 0 auto; min-height: 100vh; background: var(--bg); }
+
+  /* ---------- head：logo ---------- */
+  .head { display: flex; align-items: center; gap: 9px; padding: 14px 18px 12px; }
+  .logo {
+    width: 34px; height: 34px; border-radius: 11px;
+    background: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+  }
+  .logo svg { display: block; }
+  .wordmark { font-size: 15px; font-weight: 700; letter-spacing: 0.5px; }
+  .wordmark small { display: block; font-size: 10px; font-weight: 400; color: var(--faint); letter-spacing: 2px; }
+
+  /* ---------- hero：名称 + 简介 ---------- */
+  .hero { padding: 10px 18px 18px; }
+  .hero h1 { font-size: 30px; line-height: 1.2; letter-spacing: -0.5px; }
+  .hero h1 em { font-style: normal; color: var(--primary); }
+  .hero p { margin-top: 8px; font-size: 14px; line-height: 1.65; color: var(--sub); }
+  .fresh { margin-top: 10px; font-size: 11px; color: var(--faint); display: flex; align-items: center; gap: 5px; }
+  .fresh i { width: 6px; height: 6px; border-radius: 50%; background: var(--idle); flex: none; box-shadow: 0 0 0 3px var(--idle-soft); }
+
+  /* ---------- 查询区 ---------- */
+  .panel { background: var(--card); border-radius: var(--radius); margin: 0 14px 14px; padding: 14px 14px 15px; box-shadow: 0 1px 3px rgba(23,41,60,.04); }
+  .step { font-size: 11px; color: var(--faint); margin-bottom: 8px; letter-spacing: 1px; }
+  .step b { color: var(--primary); font-weight: 700; margin-right: 4px; }
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: none; min-height: 36px; padding: 7px 14px;
+    border-radius: 999px; border: 1px solid var(--line);
+    font-size: 13px; color: var(--sub); background: var(--bg); white-space: nowrap;
+  }
+  .chip.on { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 600; }
+  .chips + .step { margin-top: 13px; }
+  .search { margin-top: 14px; display: flex; gap: 8px; }
+  .search input {
+    flex: 1; min-height: 44px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--bg); padding: 0 14px; font-size: 14px; color: var(--ink); outline: none;
+  }
+  .search input::placeholder { color: var(--faint); }
+  .search .go {
+    flex: none; min-height: 44px; padding: 0 18px; border: none; border-radius: 12px;
+    background: var(--primary); color: #fff; font-size: 14px; font-weight: 600;
+  }
+  .search-note { margin-top: 8px; font-size: 11px; color: var(--faint); }
+
+  /* ---------- 洗衣机总览：按楼分组，每楼一行横滑 ---------- */
+  .array { padding: 4px 14px 6px; }
+  .sec-title { font-size: 16px; font-weight: 700; padding: 6px 4px 10px; display: flex; align-items: baseline; gap: 8px; }
+  .sec-title span { font-size: 11px; font-weight: 400; color: var(--faint); }
+  .b-group { background: var(--card); border-radius: var(--radius); padding: 13px 12px 13px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(23,41,60,.04); }
+  .b-head { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 10px; }
+  .b-name { font-size: 15px; font-weight: 700; }
+  .b-name small { font-size: 11px; font-weight: 400; color: var(--faint); margin-left: 6px; }
+  .b-idle { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; }
+  .b-idle.some { color: var(--idle); background: var(--idle-soft); }
+  .b-idle.none { color: var(--busy); background: var(--busy-soft); }
+
+  .m-row {
+    display: flex; gap: 8px; overflow-x: auto;
+    padding: 2px 2px 6px; scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .m-row::-webkit-scrollbar { display: none; }
+  .m-card {
+    flex: none; width: 128px;
+    border: 1px solid var(--line); border-radius: 13px;
+    padding: 10px 10px 9px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .m-top { display: flex; align-items: center; justify-content: space-between; }
+  .lamp { width: 14px; height: 14px; border-radius: 50%; flex: none; }
+  .m-card.idle .lamp { background: var(--idle); box-shadow: 0 0 0 4px var(--idle-soft); }
+  .m-card.busy .lamp { background: var(--busy); box-shadow: 0 0 0 4px var(--busy-soft); }
+  .m-card.fault .lamp { background: var(--fault); box-shadow: 0 0 0 4px var(--fault-soft); }
+  .floor { font-size: 10px; color: var(--faint); padding: 2px 7px; border-radius: 5px; background: var(--bg); }
+  .m-name {
+    font-size: 12px; font-weight: 600; line-height: 1.4; word-break: break-all;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
+    overflow: hidden; min-height: 3em;
+  }
+  .m-state { font-size: 11px; }
+  .m-card.idle .m-state { color: var(--idle); font-weight: 600; }
+  .m-card.busy .m-state { color: var(--busy); }
+  .m-card.fault .m-state { color: var(--faint); }
+
+  /* ---------- 机器明细：文件系统式 ---------- */
+  .list { padding: 8px 14px 20px; }
+  .file-panel { background: var(--card); border-radius: var(--radius); box-shadow: 0 1px 3px rgba(23,41,60,.04); overflow: hidden; }
+  .folder {
+    display: flex; align-items: center; gap: 9px;
+    padding: 12px 15px; font-size: 14px; font-weight: 700;
+    border-bottom: 1px solid var(--line); background: #fafcfe;
+  }
+  .folder svg { flex: none; }
+  summary.folder { list-style: none; cursor: pointer; }
+  summary.folder::-webkit-details-marker { display: none; }
+  .chev { margin-left: 8px; color: var(--faint); font-size: 11px; transition: transform 0.15s ease; }
+  details[open] .chev { transform: rotate(90deg); }
+  .folder .cnt { font-size: 11px; font-weight: 400; color: var(--faint); margin-left: auto; }
+  .f-row {
+    display: grid; grid-template-columns: 1fr 62px 62px; gap: 6px;
+    align-items: center; padding: 9px 15px 9px 40px;
+    border-bottom: 1px solid #f1f5f9; font-size: 13px;
+  }
+  .f-row:last-child { border-bottom: none; }
+  .f-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .tag { font-size: 10px; color: var(--sub); background: var(--bg); border-radius: 4px; padding: 2px 6px; white-space: nowrap; }
+  .f-name { margin-top: 4px; font-size: 12.5px; font-weight: 600; line-height: 1.4; word-break: break-all; }
+  .f-state { font-size: 12px; }
+  .f-state.idle { color: var(--idle); font-weight: 600; }
+  .f-state.busy { color: var(--busy); }
+  .f-state.fault { color: var(--faint); }
+  .f-time { font-size: 11px; color: var(--faint); text-align: right; font-variant-numeric: tabular-nums; }
+  .f-time b { color: var(--sub); font-weight: 600; }
+
+  footer { padding: 18px 14px 26px; text-align: center; font-size: 11px; color: var(--faint); line-height: 1.7; }
+
+  /* ---------- 电脑端适配（断点命名沿用 laptop / laptopL / desktop 惯例） ---------- */
+  /* laptop ≥1024px */
+  @media (min-width: 1024px) {
+    .wrap { max-width: 976px; display: grid; grid-template-columns: 5fr 6fr; column-gap: 26px; align-items: start; }
+    .head { grid-column: 1 / -1; padding: 20px 24px 10px; }
+    .hero { grid-column: 1; padding: 16px 8px 16px 24px; align-self: center; }
+    .panel { grid-column: 2; margin: 16px 24px 16px 0; }
+    .array, .list, footer { grid-column: 1 / -1; }
+
+    .chips { flex-wrap: wrap; overflow: visible; }
+    .folder:hover { background: #f0f6fd; }
+
+    .array { display: grid; grid-template-columns: 1fr 1fr; column-gap: 14px; row-gap: 12px; padding: 4px 24px 6px; }
+    .array .sec-title { grid-column: 1 / -1; }
+    .array .b-group { margin-bottom: 0; min-width: 0; }
+    .m-row { scrollbar-width: thin; scrollbar-color: #c9d6e4 transparent; }
+    .m-row::-webkit-scrollbar { display: block; height: 6px; }
+    .m-row::-webkit-scrollbar-thumb { background: #c9d6e4; border-radius: 3px; }
+    .m-row::-webkit-scrollbar-track { background: transparent; }
+
+    .list { padding: 8px 24px 24px; }
+    .file-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; background: none; box-shadow: none; border-radius: 0; overflow: visible; }
+    .grp { background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 1px 3px rgba(23,41,60,.04); overflow: hidden; min-width: 0; }
+  }
+  /* laptopL ≥1440px */
+  @media (min-width: 1440px) {
+    .wrap { max-width: 1280px; }
+    .hero h1 { font-size: 34px; }
+    .m-card { width: 140px; }
+    .array { grid-template-columns: repeat(3, 1fr); }
+    .file-panel { grid-template-columns: repeat(3, 1fr); }
+  }
+  /* desktop ≥1920px */
+  @media (min-width: 1920px) {
+    .wrap { max-width: 1560px; }
+    .hero h1 { font-size: 36px; }
+    .hero p { font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- head：logo -->
+  <div class="head">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round">
+        <rect x="3" y="3" width="18" height="18" rx="4"/>
+        <circle cx="12" cy="13" r="4.5"/>
+        <circle cx="7.6" cy="6.4" r="1" fill="#fff" stroke="none"/>
+      </svg>
+    </div>
+    <div class="wordmark">培黎洗衣速查<small>PEILI LAUNDRY</small></div>
+  </div>
+
+  <!-- hero：名称 + 简介 -->
+  <div class="hero">
+    <h1>今晚，<em>哪台空着？</em></h1>
+    <p>躺在宿舍就能看到全校洗衣机的实时状态——空机亮绿灯，占用有倒计时，见空再下楼，不白跑。</p>
+    <div class="fresh"><i></i>刚刚更新 · 每 30 秒自动刷新</div>
+  </div>
+
+  <!-- 查询：先楼后类型 + 搜索 -->
+  <div class="panel">
+    <div class="step"><b>①</b>选楼栋</div>
+    <div class="chips">
+      <span class="chip on">全部</span><span class="chip">4号楼</span><span class="chip">6号公寓</span><span class="chip">7号楼</span><span class="chip">8号公寓</span><span class="chip">9号公寓</span><span class="chip">10号楼</span><span class="chip">13号楼</span><span class="chip">文华楼</span><span class="chip">逸三楼</span>
+    </div>
+    <div class="step"><b>②</b>选类型</div>
+    <div class="chips">
+      <span class="chip on">全部</span><span class="chip">洗衣机</span><span class="chip">烘干机</span><span class="chip">洗鞋机</span>
+    </div>
+    <div class="search">
+      <input placeholder="搜楼栋 / 楼层 / 类型，如「8号」「5层」「烘干」">
+      <button class="go">搜索</button>
+    </div>
+    <div class="search-note">回车后跳到下方明细显示结果</div>
+  </div>
+
+  <!-- 洗衣机总览：每楼一行，横向滑动 -->
+  <div class="array">
+    <div class="sec-title">洗衣机总览 <span>全校 9 栋楼 · 59 台</span></div>
+
+    <div class="b-group">
+      <div class="b-head">
+        <div class="b-name">4号楼<small>1–4 层 · 9 台</small></div>
+        <span class="b-idle some">空闲 8 / 9</span>
+      </div>
+      <div class="m-row">
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">1层</span></div><span class="m-name">培黎职业学院4号楼1层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">1层</span></div><span class="m-name">培黎职业学院4号楼1层2号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">2层</span></div><span class="m-name">培黎职业学院4号楼2层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card busy"><div class="m-top"><span class="lamp"></span><span class="floor">2层</span></div><span class="m-name">培黎职业学院4号楼2层2号机</span><span class="m-state">剩 8 分钟</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">2层</span></div><span class="m-name">培黎职业学院4号楼2层干衣机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">3层</span></div><span class="m-name">培黎职业学院4号楼3层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">3层</span></div><span class="m-name">培黎职业学院4号机3层2号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">4层</span></div><span class="m-name">培黎职业学院4号楼4层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">4层</span></div><span class="m-name">培黎职业学院4号楼4层2号机</span><span class="m-state">空闲</span></div>
+      </div>
+    </div>
+
+    <div class="b-group">
+      <div class="b-head">
+        <div class="b-name">6号公寓<small>1–5 层 · 6 台</small></div>
+        <span class="b-idle some">空闲 5 / 6</span>
+      </div>
+      <div class="m-row">
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">1层</span></div><span class="m-name">培黎6号楼1层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">2层</span></div><span class="m-name">培黎6号楼2层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card busy"><div class="m-top"><span class="lamp"></span><span class="floor">3层</span></div><span class="m-name">培黎6号楼3层1号机</span><span class="m-state">剩 18 分钟</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">3层</span></div><span class="m-name">培黎6号楼3层洗鞋机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">4层</span></div><span class="m-name">培黎6号楼4层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">5层</span></div><span class="m-name">培黎6号楼5层1号机</span><span class="m-state">空闲</span></div>
+      </div>
+    </div>
+
+    <div class="b-group">
+      <div class="b-head">
+        <div class="b-name">7号楼<small>2/4/5 层 · 7 台</small></div>
+        <span class="b-idle some">空闲 6 / 7</span>
+      </div>
+      <div class="m-row">
+        <div class="m-card busy"><div class="m-top"><span class="lamp"></span><span class="floor">2层</span></div><span class="m-name">培黎7号楼2层1号机</span><span class="m-state">剩 7 分钟</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">2层</span></div><span class="m-name">培黎7号楼2层2号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">2层</span></div><span class="m-name">培黎7号楼2层洗鞋机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">4层</span></div><span class="m-name">培黎7号机4层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">4层</span></div><span class="m-name">培黎7号楼4层2号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">5层</span></div><span class="m-name">培黎7号机5层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">5层</span></div><span class="m-name">培黎7号楼5层2号机</span><span class="m-state">空闲</span></div>
+      </div>
+    </div>
+
+    <div class="b-group">
+      <div class="b-head">
+        <div class="b-name">8号公寓<small>1–6 层 · 7 台</small></div>
+        <span class="b-idle some">空闲 6 / 7</span>
+      </div>
+      <div class="m-row">
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">1层</span></div><span class="m-name">培黎8号楼1层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">2层</span></div><span class="m-name">培黎8号楼2层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">3层</span></div><span class="m-name">培黎8号楼3层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">3层</span></div><span class="m-name">培黎8号楼3层洗鞋机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">4层</span></div><span class="m-name">培黎8号楼4层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card busy"><div class="m-top"><span class="lamp"></span><span class="floor">5层</span></div><span class="m-name">培黎8号楼5层1号机</span><span class="m-state">剩 33 分钟</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">6层</span></div><span class="m-name">培黎8号楼6层1号机</span><span class="m-state">空闲</span></div>
+      </div>
+    </div>
+
+    <div class="b-group">
+      <div class="b-head">
+        <div class="b-name">9号公寓<small>1–6 层 · 7 台</small></div>
+        <span class="b-idle some">空闲 6 / 7</span>
+      </div>
+      <div class="m-row">
+        <div class="m-card busy"><div class="m-top"><span class="lamp"></span><span class="floor">1层</span></div><span class="m-name">培黎9号楼一层1号机</span><span class="m-state">剩 41 分钟</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">2层</span></div><span class="m-name">培黎9号楼2层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">3层</span></div><span class="m-name">培黎9号楼3层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">3层</span></div><span class="m-name">培黎9号楼3层洗鞋机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">4层</span></div><span class="m-name">培黎9号楼4层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">5层</span></div><span class="m-name">培黎9号楼5层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">6层</span></div><span class="m-name">培黎9号楼6层1号机</span><span class="m-state">空闲</span></div>
+      </div>
+    </div>
+
+    <div class="b-group">
+      <div class="b-head">
+        <div class="b-name">10号楼<small>1 层 · 2 台</small></div>
+        <span class="b-idle some">空闲 2 / 2</span>
+      </div>
+      <div class="m-row">
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">1层</span></div><span class="m-name">培黎10号楼1层洗衣机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">1层</span></div><span class="m-name">培黎10号楼1层洗鞋机</span><span class="m-state">空闲</span></div>
+      </div>
+    </div>
+
+    <div class="b-group">
+      <div class="b-head">
+        <div class="b-name">13号楼<small>1–3 层及其它 · 7 台</small></div>
+        <span class="b-idle some">空闲 6 / 7</span>
+      </div>
+      <div class="m-row">
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">1层</span></div><span class="m-name">东1层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">1层</span></div><span class="m-name">西1层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">2层</span></div><span class="m-name">东2层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card busy"><div class="m-top"><span class="lamp"></span><span class="floor">2层</span></div><span class="m-name">西2层1号机</span><span class="m-state">剩 12 分钟</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">3层</span></div><span class="m-name">东3层1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">3层</span></div><span class="m-name">西3层1号楼</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">其它</span></div><span class="m-name">培黎13号楼2层东干衣机</span><span class="m-state">空闲</span></div>
+      </div>
+    </div>
+
+    <div class="b-group">
+      <div class="b-head">
+        <div class="b-name">文华楼<small>1–4 层及其它 · 13 台</small></div>
+        <span class="b-idle some">空闲 10 / 13</span>
+      </div>
+      <div class="m-row">
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">1层</span></div><span class="m-name">文华楼1层东1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card busy"><div class="m-top"><span class="lamp"></span><span class="floor">1层</span></div><span class="m-name">文华楼1层东2号机</span><span class="m-state">剩 26 分钟</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">1层</span></div><span class="m-name">文华楼1层西1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">2层</span></div><span class="m-name">文华楼2层东1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">2层</span></div><span class="m-name">文华楼2层东2号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">2层</span></div><span class="m-name">文华楼2层西1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">其它</span></div><span class="m-name">文华楼2层东干衣机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">3层</span></div><span class="m-name">文华楼3层东1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">3层</span></div><span class="m-name">文华楼3层东2号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">3层</span></div><span class="m-name">文华楼3层西1号机</span><span class="m-state">空闲</span></div>
+        <div class="m-card fault"><div class="m-top"><span class="lamp"></span><span class="floor">4层</span></div><span class="m-name">文华楼4层东1号机</span><span class="m-state">维修中</span></div>
+        <div class="m-card busy"><div class="m-top"><span class="lamp"></span><span class="floor">4层</span></div><span class="m-name">文华楼4层东2号机</span><span class="m-state">即将结束</span></div>
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">4层</span></div><span class="m-name">文华楼4层西1号机</span><span class="m-state">空闲</span></div>
+      </div>
+    </div>
+
+    <div class="b-group">
+      <div class="b-head">
+        <div class="b-name">逸三楼<small>4 层 · 1 台</small></div>
+        <span class="b-idle some">空闲 1 / 1</span>
+      </div>
+      <div class="m-row">
+        <div class="m-card idle"><div class="m-top"><span class="lamp"></span><span class="floor">4层</span></div><span class="m-name">逸三楼4层1号机</span><span class="m-state">空闲</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 机器明细：文件系统式，搜索结果落点 -->
+  <div class="list">
+    <div class="sec-title">机器明细 <span>可按楼栋 / 楼层 / 类型搜索</span></div>
+    <div class="file-panel">
+      <details class="grp" open><summary class="folder"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#2e7df0" stroke-width="1.8" stroke-linejoin="round"><path d="M3 6.5A2 2 0 0 1 5 4.5h4l2 2.5h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        4号楼 <span class="cnt">9 台 · 空闲 8</span><span class="chev">▸</span></summary>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">1层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎职业学院4号楼1层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">1层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎职业学院4号楼1层2号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">2层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎职业学院4号楼2层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">2层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎职业学院4号楼2层2号机</div></div><span class="f-state busy">占用</span><span class="f-time"><b>剩 8 分钟</b></span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">2层</span><span class="tag">烘干机</span></div><div class="f-name">培黎职业学院4号楼2层干衣机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">3层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎职业学院4号楼3层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">3层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎职业学院4号机3层2号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">4层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎职业学院4号楼4层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">4层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎职业学院4号楼4层2号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+
+      </details>
+      <details class="grp"><summary class="folder"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#2e7df0" stroke-width="1.8" stroke-linejoin="round"><path d="M3 6.5A2 2 0 0 1 5 4.5h4l2 2.5h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        6号公寓 <span class="cnt">6 台 · 空闲 5</span><span class="chev">▸</span></summary>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">1层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎6号楼1层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">2层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎6号楼2层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">3层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎6号楼3层1号机</div></div><span class="f-state busy">占用</span><span class="f-time"><b>剩 18 分钟</b></span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">3层</span><span class="tag">洗鞋机</span></div><div class="f-name">培黎6号楼3层洗鞋机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">4层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎6号楼4层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">5层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎6号楼5层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+
+      </details>
+      <details class="grp"><summary class="folder"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#2e7df0" stroke-width="1.8" stroke-linejoin="round"><path d="M3 6.5A2 2 0 0 1 5 4.5h4l2 2.5h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        7号楼 <span class="cnt">7 台 · 空闲 6</span><span class="chev">▸</span></summary>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">2层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎7号楼2层1号机</div></div><span class="f-state busy">占用</span><span class="f-time"><b>剩 7 分钟</b></span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">2层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎7号楼2层2号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">2层</span><span class="tag">洗鞋机</span></div><div class="f-name">培黎7号楼2层洗鞋机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">4层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎7号机4层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">4层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎7号楼4层2号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">5层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎7号机5层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">5层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎7号楼5层2号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+
+      </details>
+      <details class="grp"><summary class="folder"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#2e7df0" stroke-width="1.8" stroke-linejoin="round"><path d="M3 6.5A2 2 0 0 1 5 4.5h4l2 2.5h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        8号公寓 <span class="cnt">7 台 · 空闲 6</span><span class="chev">▸</span></summary>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">1层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎8号楼1层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">2层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎8号楼2层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">3层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎8号楼3层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">3层</span><span class="tag">洗鞋机</span></div><div class="f-name">培黎8号楼3层洗鞋机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">4层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎8号楼4层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">5层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎8号楼5层1号机</div></div><span class="f-state busy">占用</span><span class="f-time"><b>剩 33 分钟</b></span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">6层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎8号楼6层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+
+      </details>
+      <details class="grp"><summary class="folder"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#2e7df0" stroke-width="1.8" stroke-linejoin="round"><path d="M3 6.5A2 2 0 0 1 5 4.5h4l2 2.5h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        9号公寓 <span class="cnt">7 台 · 空闲 6</span><span class="chev">▸</span></summary>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">1层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎9号楼一层1号机</div></div><span class="f-state busy">占用</span><span class="f-time"><b>剩 41 分钟</b></span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">2层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎9号楼2层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">3层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎9号楼3层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">3层</span><span class="tag">洗鞋机</span></div><div class="f-name">培黎9号楼3层洗鞋机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">4层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎9号楼4层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">5层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎9号楼5层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">6层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎9号楼6层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+
+      </details>
+      <details class="grp"><summary class="folder"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#2e7df0" stroke-width="1.8" stroke-linejoin="round"><path d="M3 6.5A2 2 0 0 1 5 4.5h4l2 2.5h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        10号楼 <span class="cnt">2 台 · 空闲 2</span><span class="chev">▸</span></summary>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">1层</span><span class="tag">洗衣机</span></div><div class="f-name">培黎10号楼1层洗衣机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">1层</span><span class="tag">洗鞋机</span></div><div class="f-name">培黎10号楼1层洗鞋机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+
+      </details>
+      <details class="grp"><summary class="folder"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#2e7df0" stroke-width="1.8" stroke-linejoin="round"><path d="M3 6.5A2 2 0 0 1 5 4.5h4l2 2.5h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        13号楼 <span class="cnt">7 台 · 空闲 6</span><span class="chev">▸</span></summary>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">1层</span><span class="tag">洗衣机</span></div><div class="f-name">东1层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">1层</span><span class="tag">洗衣机</span></div><div class="f-name">西1层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">2层</span><span class="tag">洗衣机</span></div><div class="f-name">东2层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">2层</span><span class="tag">洗衣机</span></div><div class="f-name">西2层1号机</div></div><span class="f-state busy">占用</span><span class="f-time"><b>剩 12 分钟</b></span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">3层</span><span class="tag">洗衣机</span></div><div class="f-name">东3层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">3层</span><span class="tag">洗衣机</span></div><div class="f-name">西3层1号楼</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">其它</span><span class="tag">烘干机</span></div><div class="f-name">培黎13号楼2层东干衣机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+
+      </details>
+      <details class="grp"><summary class="folder"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#2e7df0" stroke-width="1.8" stroke-linejoin="round"><path d="M3 6.5A2 2 0 0 1 5 4.5h4l2 2.5h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        文华楼 <span class="cnt">13 台 · 空闲 10</span><span class="chev">▸</span></summary>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">1层</span><span class="tag">洗衣机</span></div><div class="f-name">文华楼1层东1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">1层</span><span class="tag">洗衣机</span></div><div class="f-name">文华楼1层东2号机</div></div><span class="f-state busy">占用</span><span class="f-time"><b>剩 26 分钟</b></span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">1层</span><span class="tag">洗衣机</span></div><div class="f-name">文华楼1层西1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">2层</span><span class="tag">洗衣机</span></div><div class="f-name">文华楼2层东1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">2层</span><span class="tag">洗衣机</span></div><div class="f-name">文华楼2层东2号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">2层</span><span class="tag">洗衣机</span></div><div class="f-name">文华楼2层西1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">其它</span><span class="tag">烘干机</span></div><div class="f-name">文华楼2层东干衣机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">3层</span><span class="tag">洗衣机</span></div><div class="f-name">文华楼3层东1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">3层</span><span class="tag">洗衣机</span></div><div class="f-name">文华楼3层东2号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">3层</span><span class="tag">洗衣机</span></div><div class="f-name">文华楼3层西1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">4层</span><span class="tag">洗衣机</span></div><div class="f-name">文华楼4层东1号机</div></div><span class="f-state fault">维修中</span><span class="f-time">—</span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">4层</span><span class="tag">洗衣机</span></div><div class="f-name">文华楼4层东2号机</div></div><span class="f-state busy">占用</span><span class="f-time"><b>即将结束</b></span></div>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">4层</span><span class="tag">洗衣机</span></div><div class="f-name">文华楼4层西1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+
+      </details>
+      <details class="grp"><summary class="folder"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#2e7df0" stroke-width="1.8" stroke-linejoin="round"><path d="M3 6.5A2 2 0 0 1 5 4.5h4l2 2.5h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        逸三楼 <span class="cnt">1 台 · 空闲 1</span><span class="chev">▸</span></summary>
+      <div class="f-row"><div><div class="f-tags"><span class="tag">4层</span><span class="tag">洗衣机</span></div><div class="f-name">逸三楼4层1号机</div></div><span class="f-state idle">空闲</span><span class="f-time">—</span></div>
+      </details>
+    </div>
+  </div>
+
+  <footer>非官方工具 · 数据来自海乐生活<br>仅供同学们参考，以现场为准</footer>
+</div>
+</body>
+</html>
