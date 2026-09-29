@@ -7,3 +7,7 @@ node_modules/
 # 本地工具缓存
 .playwright-cli/
 .DS_Store
+
+# 防御性排除（用户要求：AI 过程文件与 Obsidian 不入库）
+.obsidian/
+.claude/
