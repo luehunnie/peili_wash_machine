@@ -1,0 +1,34 @@
+# 洗衣机状态与预约平台
+
+学生对宿舍/校园洗衣机（海乐生活/云裳体系）的状态查看与预约 Web 平台。非官方第三方客户端，非商用。
+
+## Language
+
+### 业务术语（我们的叫法 → 官方 API 字段）
+
+**网点（Station）**:
+一台洗衣机的物理摆放点，通常是一栋楼里的洗衣房。对应官方 `position`（`positionId`）。
+_Avoid_: 位置、商家、门店（官方另有一个 `shopId`，指网点所属商户，勿混淆）
+
+**机器（Machine）**:
+一台具体的洗衣机/烘干机/洗鞋机。⚠️ 官方 API 把它叫 `goods`（商品，`goodsId`），是逆向时最大的命名陷阱。
+_Avoid_: 商品、设备（"设备"在官方语境里有时指硬件模组 `deviceId`）
+
+**程序（Program）**:
+机器上可选的洗涤方案（如"标准洗 35 分钟 4 元"）。对应官方 `item`（SKU，`goodsItemId`/`skuId`）。
+_Avoid_: SKU、项目
+
+**预约（Reservation）**:
+用户对一台机器某个档期/用次的占位订单，在官方系统内生效。对应官方 `appointment`/`reserveCreate` 订单。
+_Avoid_: 订单（"订单"保留给官方 `orderNo` 语义）
+
+**机器状态（Machine State）**:
+空闲/占用/故障三态，官方 `state`/`deviceState`：1=空闲 2=占用 3=故障。唯一可信来源是明细接口，网点级 `idleCount` 统计可能滞后，不作为展示依据。
+
+### 平台术语
+
+**只读链路（Read-only Chain）**:
+免登录即可查询 网点→机器→状态→程序价格 的四个接口组合。已实测验证。
+
+**免支付预约（Free Reservation）**:
+`reserveMethod=1` 的预约，创建即生效，无需走收银台。平台唯一支持的预约类型；支付类预约（`reserveMethod=2`）明确不支持。
