@@ -33,6 +33,8 @@
 
 ## 四、登录实验结果（关键！新主控从这里继续）
 
+> **2026-09-29 更新**：本节的卡点已突破——登录打通、token 已取得，下方失败矩阵**全部作废，勿重复试**。最新战果见 §六。
+
 **目标**：拿到登录 token 以探测预约接口。**结果：卡在登录，token 未取得。** 过程全记录：
 
 ### 已确证事实
@@ -77,3 +79,33 @@
 2. 向用户报到，确认继续登录攻坚（register chunk 路线）还是调整 SPEC-2 顺序
 3. 攻坚成功 → 第二轮 grilling → SPEC-2 控制包（含：T 票拆分、验收标准、worker 派工提示词模板）→ 建 Issues → 派工
 4. 任何写类实验前：向用户出示具体调用内容，获实时同意
+
+## 六、2026-09-29 战果（登录打通 + 预约暂缓定案）
+
+### 登录通道已打通（§四失败矩阵全部作废）
+
+- **REST 直连，两发 curl 即可复现**，模拟器/抓包不再需要：
+  1. `POST /login/getCode`，body `{"target":"<手机号>","sendType":1,"method":1}`，headers `Content-Type: application/json` + `appType: 9` + `appVersion: 2.2.10` → `{"code":0,"message":"success"}` 即短信送达
+  2. `POST /login/login`，body `{"account":"<手机号>","loginType":2,"verificationCode":"<短信码>","authorizationClientType":"9"}`，headers 同上 + `authorization:`（空）→ `{"code":0,"data":{"token":"<JWT>","userId":...}}`
+- 精确形状、错误码与注意项已更新入 `docs/api/02_api_data_link.md` §3（旧 H5 形状判死留档于其 §3.5）
+- token 用法：JWT 裸放 `authorization` 头（无 Bearer 前缀）；**实测有效期约 30 天（样例 exp=2026-10-28），即至 2026-10-28 前有效；JWT 不落盘，只存于当次会话，过期重发验证码即可**
+- 错误码：100000=验证码错误（含旧码被新发码作废）；120=参数形状错；**每次发码会作废上一条验证码**
+
+### 预约（M2）裁定：功能存在、培黎未配置 → 暂缓
+
+- 五路证据（楼栋级 / 设备级 / 目录层 / 客户端 / 现实佐证）与六栋 positionId/shopId 清单定案于 `docs/adr/0003-m2-booking-deferred.md`，速查表同步至 `docs/api/02_api_data_link.md` §4「培黎实测」小节
+- 重启触发器一句话：任一楼 `POST /appointment/item/list {"shopId":X,"page":1,"pageSize":10}` 返回非空 itemList = 运营商上线预约，SPEC-2 解冻
+
+### 环境状态
+
+- `.tools/`（约 6.9GB 模拟器/SDK/mitm 环境）**保留**，至开发验证完成后再清理（用户已拍板）
+- 模拟器与 mitmdump 均已停
+- 站点更新**冻结**，至开发验证完成后再上线
+- QA 已过（另任务）：7/7 平台配置通过、0 console 错误；余留风险仅老 X5 白屏与 Chromium<87 抽屉 inset 错位（即下表 CSS 修复所针对）
+
+### 挂账队列
+
+| 事项 | 触发条件 |
+|---|---|
+| 站点 CSS 兼容修复（抽屉 `inset:0` → 四边展开，一行 CSS） | 开发验证完成后实施并上线 |
+| `.tools/` 清理（约 6.9GB） | 开发验证完成后执行 |

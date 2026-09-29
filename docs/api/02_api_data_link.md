@@ -138,28 +138,47 @@ GET /position/positionDetail?lng=&lat=&id=<positionId>
 → {..., workTime, serviceTelephone, positionDeviceDetailList:[...]}
 ```
 
-## 3. 登录链路（预约等写操作前需要）
+## 3. ★ 登录链路（2026-09-29 实测打通：App 形状，两发 curl 即可复现）
+
+> 实测于生产环境，REST 直连即可，模拟器/抓包不再需要。手机号下文以示例号 `13800138000` 表示。
 
 ### 3.1 发验证码
 ```http
-POST /login/getCode    {"target":"13800138000"}     → code:0 发送成功（60s 冷却）
-```
+POST /login/getCode
+Content-Type: application/json
+appType: 9
+appVersion: 2.2.10
 
-### 3.2 验证码登录
+{"target":"13800138000","sendType":1,"method":1}
+```
+→ `{"code":0,"message":"success"}` 即短信送达（60s 冷却）。**每次发码会作废上一条验证码**（旧码再用报 100000）。
+
+### 3.2 验证码登录（App 形状，实测正解）
 ```http
-# H5 网页端：
-POST /login/bindAccount   {"phone":"...","verificationCode":"...","loginType":5}
-# Android App 端：
-POST /login/login         {"phone/mobile":...,"code/verificationCode":...}
-→ {"token":"...", "token_expired": <毫秒时间戳>, member:{...}}
-```
-第三方授权：`/login/authorizationLogin`（支付宝 `authorizationCode`,`clientType:2`）、`/login/bindWechatAccount`（`channel:5,code,encryptedData,iv`）
+POST /login/login
+Content-Type: application/json
+appType: 9
+appVersion: 2.2.10
+authorization:            # 留空即可
 
-### 3.3 之后所有请求带
+{"account":"13800138000","loginType":2,"verificationCode":"<短信码>","authorizationClientType":"9"}
 ```
-authorization: <token>
-```
-（H5 存 localStorage `user_token`/`USE_ACCESS_TOKEN`；App 存 SharedPreferences `"token"`）
+→ `{"code":0,"data":{"token":"<JWT>","userId":...}}`
+
+### 3.3 token 用法与有效期
+- JWT **裸放 `authorization` 头**（无 Bearer 前缀），此后所有请求同此
+- 实测有效期约 **30 天**（样例 exp=2026-10-28）；过期重发验证码重新登录即可
+
+### 3.4 错误码（实测）
+| code | 含义 |
+|---|---|
+| 100000 | 验证码错误（含旧码被新发码作废的情形） |
+| 120 | 参数形状错误（body 形状不对时返回） |
+
+### 3.5 旧 H5 形状（已废弃，留档）
+> ~~`POST /login/bindAccount {"phone":...,"verificationCode":...,"loginType":5}`~~ —— **网页端不可行**（bindAccount 是支付宝授权后的手机绑定步骤，纯短信登录被服务端拒 100000），已由 §3.2 App 形状取代。完整失败矩阵见 `docs/HANDOFF.md` §四。
+>
+> 第三方授权路径（仍然存在，仅作参考）：`/login/authorizationLogin`（支付宝 `authorizationCode`、`clientType:2`）、`/login/bindWechatAccount`（`channel:5,code,encryptedData,iv`，网页端不可行）。
 
 ## 4. 预约（下单）链路 —— 需登录
 
@@ -200,6 +219,30 @@ authorization: <token>
 - 进行中订单（首页角标）：`POST /trade/underway/stateList {}` → `{orderNo, stateList:[...]}`
 - 订单列表：`POST /trade/list`；付款：`/pay/pay`、`/pay/prePay`、`/pay/asyncPay`
 
+### 培黎实测（2026-09-29）：目录空壳，预约暂缓
+
+用 §3 实测 token 探测培黎九栋，结论：**预约目录为空壳——功能存在但运营商未配置**，M2 预约暂缓（定案见 `docs/adr/0003-m2-booking-deferred.md`）。
+
+| 证据层 | 结果 |
+|---|---|
+| 楼栋级 | 9 栋中 6 栋 `enableReserve=True` / `appointmentState=1`（9/8/6/7/13号楼、文华楼；未开：10号楼、4号楼、逸三楼） |
+| 设备级 | 8号楼全部 6 台洗衣机 `enableReserve=False`、`reserveState=0/None`（样本：8号楼1层1号机 goodsId=85625309 / deviceId=50963278） |
+| 目录层 | `goodsCategory/list` 有分类（10=洗衣机 / 11=洗鞋机 / 12=烘干机），但 `spec/list` 三类全空、`item/list` 六栋全空 |
+| 客户端 | App 逆向证实预约功能完整存在（预约成功页 / "appointment" 路由 / 「可预约」等词条） |
+
+六栋 positionId / shopId（`item/list` 探测用）：
+
+| 楼栋 | positionId | shopId |
+|---|---|---|
+| 8号楼 | 25238 | 1000029464 |
+| 6号楼 | 25239 | 1000029463 |
+| 9号楼 | 25237 | 1000029465 |
+| 7号楼 | 25240 | 1000029461 |
+| 13号楼 | 27727 | 1000029673 |
+| 文华楼 | 27741 | 1000022167 |
+
+**重启触发器**：任一楼 `POST /appointment/item/list {"shopId":X,"page":1,"pageSize":10}` 返回非空 itemList = 运营商已上线预约，SPEC-2 解冻。
+
 ## 5. 其他已确认接口（App+H5 汇总）
 
 登录 `/login/userLayout` `/login/authorizationUrl` `/login/bindAccountForApp`；
@@ -215,7 +258,7 @@ authorization: <token>
 
 1. 位置/状态类接口**完全无鉴权**——你的 Web 页面可以直接展示，无需账号
 2. 无速率限制迹象（未压测，Web 端请自觉加缓存，建议 10~30s 轮询间隔）
-3. 预约/支付必须用户自己的 token——Web 端登录页让用户手机号+验证码自助登录即可（`/login/getCode` + `/login/bindAccount`，loginType:5）
+3. 预约/支付必须用户自己的 token——Web 端登录页让用户手机号+验证码自助登录即可（`/login/getCode` + `/login/login`，loginType:2，实测形状见 §3；H5 的 bindAccount/loginType:5 已判死，见 §3.5）
 4. 阿里云 WAF Cookie（acw_tc）由 CDN 自动处理，浏览器 fetch 无感
 5. 官方 H5 本身就是网页（h5.haier-ioc.com，uni-app），你的站点相当于第三方的另一个客户端；低频个人使用无合规问题，**勿商用/勿压测/勿共享他人 token**
 
