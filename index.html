@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>校园洗衣机状态</title>
+<style>
+  /* ---------- 基础（移动端优先，微信内置浏览器为主要环境） ---------- */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f4f6f8;
+    color: #1f2933;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* ---------- 顶栏：标题 + 状态条 ---------- */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #0d47a1;
+    color: #fff;
+    padding: 12px 16px;
+  }
+  h1 { margin: 0; font-size: 18px; font-weight: 600; }
+  #status-bar {
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+    min-height: 1.4em;
+    color: rgba(255, 255, 255, 0.85);
+    word-break: break-all;
+  }
+  #status-bar.loading { color: #ffd54f; }
+  #status-bar.ok      { color: #a5d6a7; }
+  #status-bar.error   { color: #ff8a80; }
+
+  /* ---------- 主区挂载点（后续 Ticket：网点列表 → 状态墙 → 详情） ---------- */
+  main#app { padding: 16px; min-height: 70vh; }
+
+  /* ---------- ?debug=1 自测输出 ---------- */
+  .debug-title { margin: 0 0 8px; font-size: 13px; color: #52606d; }
+  #debug-output {
+    margin: 0;
+    padding: 12px;
+    background: #102027;
+    color: #80cbc4;
+    font-family: Menlo, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-all;
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+
+  /* ---------- 页脚（文案占位） ---------- */
+  footer {
+    padding: 16px;
+    text-align: center;
+    font-size: 12px;
+    color: #9aa5b1;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>校园洗衣机状态</h1>
+  <div id="status-bar">就绪</div>
+</header>
+
+<main id="app">
+  <!-- 挂载点：后续 Ticket 在此渲染 网点列表 → 机器状态墙 → 单机详情 -->
+</main>
+
+<footer id="footer">
+  <!-- TODO(后续 Ticket): FROZEN#6 页脚文案「非官方工具，数据来自海乐生活」在此落位 -->
+</footer>
+
+<script>
+"use strict";
+/* =====================================================================
+ * 常量区（PROJECT_CONTROL_PACKET FROZEN#5：常量全部集中在此，勿散落到业务代码）
+ * ===================================================================== */
+
+// 官方生产 API（App + H5 共用，CORS 已实测放行）
+const BASE_URL = "https://yshz-user.haier-ioc.com";
+
+// 必带请求头（缺 appType 服务端报参数错误；authorization 为裸 token 无 Bearer 前缀，只读链路留空即可）
+const HEADERS = {
+  "Content-Type": "application/json",
+  "appType": "2",       // 2 = H5 网页端（9 = Android App，服务端都认）
+  "appVersion": "1.8.9",
+  "authorization": ""   // 只读链路不需要登录
+};
+
+// TODO: 换成校园坐标（当前为逆向验证时的样本坐标：杭州西湖附近）
+const DEFAULT_LNG = 120.15507;
+const DEFAULT_LAT = 30.274085;
+
+// 机器状态字典（官方 state / deviceState）
+const STATE = { 1: "空闲", 2: "占用", 3: "故障" };
+
+// 设备类型字典（官方 categoryCode / deviceType）
+const CATEGORY = {
+  "00": "洗衣机",
+  "01": "洗鞋机",
+  "02": "烘干机",
+  "03": "吹风机",
+  "04": "饮水机",
+  "08": "淋浴",
+  "09": "投放器"
+};
+
+// 未登录类业务错误码（只读链路遇不到；未来写链路如遇这些 code 需引导登录）
+const LOGIN_ERROR_CODES = [2, 401, 100002, 100003];
+
+// 单请求超时
+const API_TIMEOUT_MS = 10000;
+
+/* =====================================================================
+ * API 客户端层
+ * 两类错误严格区分（后续 UI 需不同展示）：
+ *   ApiBusinessError —— 请求到达服务端，但信封 code != 0（携带 code 与服务端 message）
+ *   ApiNetworkError  —— 未取得合法业务信封：断网 / DNS / 超时 / HTTP 非 2xx / 响应非 JSON
+ * ===================================================================== */
+
+class ApiBusinessError extends Error {
+  constructor(code, serverMessage) {
+    super("业务错误 code=" + code + "：" + serverMessage);
+    this.name = "ApiBusinessError";
+    this.code = code;
+    this.serverMessage = serverMessage;
+    this.isLoginError = LOGIN_ERROR_CODES.indexOf(Number(code)) !== -1; // 2/401/100002/100003 = 未登录
+  }
+}
+
+class ApiNetworkError extends Error {
+  constructor(message, cause) {
+    super("网络错误：" + message);
+    this.name = "ApiNetworkError";
+    if (cause) { this.cause = cause; }
+  }
+}
+
+// BASE_URL + path [+ params 拼 query string；值为 null/undefined 的参数跳过]
+function buildUrl(path, params) {
+  let url = BASE_URL + path;
+  if (!params) { return url; }
+  const qs = new URLSearchParams();
+  Object.keys(params).forEach(function (key) {
+    const v = params[key];
+    if (v === undefined || v === null) { return; }
+    qs.append(key, String(v));
+  });
+  const s = qs.toString();
+  if (!s) { return url; }
+  return url + (url.indexOf("?") !== -1 ? "&" : "?") + s;
+}
+
+/**
+ * 统一 API 调用入口。
+ * @param {string} method  HTTP 方法（"GET" / "POST"）
+ * @param {string} path    接口路径，以 / 开头，如 "/position/nearPosition"
+ * @param {{body?: Object, params?: Object}} [options]
+ *   body   —— POST 请求体（自动 JSON 序列化）
+ *   params —— 查询参数（自动拼 query string）
+ * @returns {Promise<*>} 信封 code==0 时的 data 字段
+ * @throws {ApiBusinessError} 信封 code!=0
+ * @throws {ApiNetworkError}  网络失败 / 超时 / 响应不是合法信封
+ */
+async function apiCall(method, path, options) {
+  const opts = options || {};
+  const url = buildUrl(path, opts.params);
+  const init = {
+    method: method,
+    headers: Object.assign({}, HEADERS)
+  };
+  // GET/HEAD 不允许携带 body
+  if (opts.body !== undefined && method !== "GET" && method !== "HEAD") {
+    init.body = JSON.stringify(opts.body);
+  }
+
+  const controller = (typeof AbortController !== "undefined") ? new AbortController() : null;
+  let timer = null;
+  if (controller) {
+    init.signal = controller.signal;
+    timer = setTimeout(function () { controller.abort(); }, API_TIMEOUT_MS);
+  }
+
+  let response;
+  try {
+    response = await fetch(url, init);
+  } catch (err) {
+    const e = err || {};
+    if (e.name === "AbortError") {
+      throw new ApiNetworkError("请求超时（" + (API_TIMEOUT_MS / 1000) + "s）：" + method + " " + path, err);
+    }
+    throw new ApiNetworkError("网络请求失败：" + method + " " + path + "：" + (e.message || String(err)), err);
+  } finally {
+    if (timer !== null) { clearTimeout(timer); }
+  }
+
+  // 先读原文再解析，便于区分「非 JSON 响应」与「业务信封」
+  let rawText = "";
+  try { rawText = await response.text(); } catch (err) { rawText = ""; }
+  let payload = null;
+  try { payload = rawText ? JSON.parse(rawText) : null; } catch (err) { payload = null; }
+
+  if (payload !== null && typeof payload === "object" && Object.prototype.hasOwnProperty.call(payload, "code")) {
+    if (Number(payload.code) === 0) {
+      return payload.data; // ★ 成功：只返回信封里的 data
+    }
+    throw new ApiBusinessError(payload.code, payload.message || ("HTTP " + response.status));
+  }
+
+  // 没有标准信封：HTTP 错误页 / WAF 拦截页 / 空响应等
+  throw new ApiNetworkError(
+    "响应异常（HTTP " + response.status + (payload === null && rawText ? "，响应非 JSON" : "") + "）：" + method + " " + path
+  );
+}
+
+/* =====================================================================
+ * UI 基础设施：状态条（加载/成功/失败与全局错误的统一展示出口）
+ * ===================================================================== */
+
+// kind: "" 普通 / "loading" / "ok" / "error"
+function setStatus(text, kind) {
+  const bar = document.getElementById("status-bar");
+  if (!bar) { return; }
+  bar.textContent = text;
+  bar.className = kind || "";
+}
+
+// 全局错误不被吞：打到状态条（return false 保持控制台默认行为）
+window.onerror = function (message) {
+  setStatus("全局错误：" + message, "error");
+  return false;
+};
+
+// Promise 未捕获拒绝同样打到状态条
+window.addEventListener("unhandledrejection", function (event) {
+  const r = event.reason;
+  setStatus("未处理的 Promise 异常：" + (r && r.message ? r.message : String(r)), "error");
+});
+
+/* =====================================================================
+ * 自测入口（Acceptance 要求）：URL 带 ?debug=1 时执行
+ * 调 POST /position/nearPosition，成功把 JSON.stringify(data,null,2) 渲染进 <pre>
+ * ===================================================================== */
+
+async function runDebugSelfTest() {
+  const app = document.getElementById("app");
+  const title = document.createElement("p");
+  title.className = "debug-title";
+  title.textContent = "API 自测模式（?debug=1）";
+
+  const pre = document.createElement("pre");
+  pre.id = "debug-output";
+
+  app.textContent = ""; // 清空挂载点
+  app.appendChild(title);
+  app.appendChild(pre);
+
+  const body = { lng: DEFAULT_LNG, lat: DEFAULT_LAT, page: 1, pageSize: 5 };
+  const requestLine = "POST " + BASE_URL + "/position/nearPosition" +
+    "\nbody: " + JSON.stringify(body) + "\n\n";
+
+  setStatus("自测中：POST /position/nearPosition …", "loading");
+  pre.textContent = requestLine + "请求中…";
+
+  try {
+    const data = await apiCall("POST", "/position/nearPosition", { body: body });
+    pre.textContent = requestLine + JSON.stringify(data, null, 2);
+    setStatus("自测成功：只读链路连通", "ok");
+  } catch (err) {
+    let detail;
+    if (err instanceof ApiBusinessError) {
+      detail = "业务错误 code=" + err.code +
+        "\n服务端 message：" + err.serverMessage +
+        (err.isLoginError ? "\n（未登录类错误码：2/401/100002/100003）" : "");
+    } else if (err instanceof ApiNetworkError) {
+      detail = err.message + (err.cause ? "\n原因：" + err.cause : "");
+    } else {
+      detail = (err && err.message) ? err.message : String(err);
+    }
+    pre.textContent = requestLine + detail;
+    setStatus("自测失败：" + ((err && err.message) ? err.message : err), "error");
+  }
+}
+
+/* =====================================================================
+ * 统一入口：页面加载即执行
+ * ===================================================================== */
+
+async function main() {
+  setStatus("就绪");
+  if (new URLSearchParams(window.location.search).get("debug") === "1") {
+    await runDebugSelfTest();
+    return;
+  }
+  // 后续 Ticket 在此接入：网点列表 → 机器状态墙 → 单机详情
+}
+
+main().catch(function (err) {
+  setStatus("main() 未捕获异常：" + ((err && err.message) ? err.message : String(err)), "error");
+});
+</script>
+</body>
+</html>
