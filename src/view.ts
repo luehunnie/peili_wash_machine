@@ -175,6 +175,11 @@ export function renderShell(root: HTMLElement, h: ViewHandlers): ShellRefs {
   footer.appendChild(el("span", undefined, "非官方工具 · 数据来自海乐生活"));
   footer.appendChild(document.createElement("br"));
   footer.appendChild(document.createTextNode("仅供同学们参考，以现场为准"));
+  // 问题反馈邮箱（mailto：普通浏览器点击唤起邮件；微信内长按可复制链接）
+  footer.appendChild(document.createElement("br"));
+  const mail = el("a", "foot-mail", "问题反馈：3628736299@qq.com");
+  mail.href = "mailto:3628736299@qq.com";
+  footer.appendChild(mail);
 
   wrap.append(head, hero, panel, array, listBox, footer);
   root.appendChild(wrap);

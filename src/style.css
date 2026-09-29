@@ -511,6 +511,15 @@ footer {
   color: var(--faint);
   line-height: 1.7;
 }
+/* 反馈邮箱：与页脚同字号，可点可复制 */
+footer .foot-mail {
+  color: var(--faint);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+footer .foot-mail:active {
+  color: var(--sub);
+}
 
 /* ---------- 骨架屏 ---------- */
 .skel-head {
