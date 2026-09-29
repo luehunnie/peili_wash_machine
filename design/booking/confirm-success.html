@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>预约原型 · 确认与成功 —— 免支付确认弹层 + 成功态</title>
+<style>
+  /* =====================================================================
+   * M2 预约静态参考原型 · 确认弹层 + 成功态
+   * 弹层 = 抽屉同族底部工作表；汇总行 = f-row 行族；
+   * 免支付说明 = primary-soft 横幅（bk-pill 同色对）；
+   * 成功标记 = lamp 灯语言放大（idle 绿点）
+   * ===================================================================== */
+  :root {
+    color-scheme: light;
+    --bg: #eef3f8; --card: #ffffff; --ink: #17293c; --sub: #5c6f82; --faint: #9db0c2;
+    --line: #e3eaf2; --primary: #2e7df0; --primary-soft: #e5effe;
+    --idle: #17a35c; --idle-soft: #e2f6ec; --busy: #e8951f; --busy-soft: #fdf1dc;
+    --fault: #a7b1bc; --fault-soft: #f0f3f6; --radius: 16px;
+    --page-bg: #dfe7ef; --on-primary: #ffffff; --folder-bg: #fafcfe; --folder-hover: #f0f6fd;
+    --row-line: #f1f5f9; --row-hover: #f4f9fe; --busy-line: #f2dcb2; --busy-deep: #7c5310;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; background: var(--page-bg); color: var(--ink); -webkit-text-size-adjust: 100%; }
+  .wrap { max-width: 414px; margin: 0 auto; min-height: 100vh; background: var(--bg); }
+
+  .proto { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 9px 14px; background: var(--primary-soft); border-bottom: 1px solid var(--line); font-size: 11px; color: var(--sub); }
+  .proto b { color: var(--primary); font-weight: 700; }
+  .proto a { color: var(--primary); font-weight: 600; text-decoration: none; }
+  .proto .grow { margin-left: auto; }
+  .proto .fake { color: var(--faint); }
+  .proto .hint { flex-basis: 100%; color: var(--faint); font-size: 10px; }
+
+  .page-head { display: flex; align-items: center; gap: 10px; background: var(--card); border-bottom: 1px solid var(--line); padding: 12px 14px; }
+  .back { flex: none; width: 36px; height: 36px; border-radius: 11px; border: 1px solid var(--line); background: var(--bg); color: var(--sub); text-decoration: none; display: flex; align-items: center; justify-content: center; }
+  .ph-main { min-width: 0; flex: 1; }
+  .ph-title { font-size: 16px; font-weight: 700; line-height: 1.3; }
+  .ph-sub { margin-top: 2px; font-size: 11px; color: var(--faint); }
+
+  /* 语境：机器卡 + 已选时段行（时段墙A 局部回显） */
+  .m-ctx { background: var(--card); border-radius: var(--radius); margin: 12px 14px 0; padding: 12px 14px; box-shadow: 0 1px 3px rgba(23,41,60,.04); display: flex; align-items: center; gap: 10px; }
+  .lamp { width: 14px; height: 14px; border-radius: 50%; background: var(--idle); box-shadow: 0 0 0 4px var(--idle-soft); flex: none; }
+  .m-ctx-main { min-width: 0; flex: 1; }
+  .m-ctx-name { font-size: 15px; font-weight: 700; }
+  .m-ctx-sub { margin-top: 4px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+  .tag { font-size: 10px; color: var(--sub); background: var(--bg); border-radius: 4px; padding: 2px 6px; white-space: nowrap; }
+  .m-ctx-state { font-size: 12px; font-weight: 600; color: var(--idle); }
+  .bk-pill { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; color: var(--primary); background: var(--primary-soft); white-space: nowrap; flex: none; }
+  .file-panel { background: var(--card); border-radius: var(--radius); box-shadow: 0 1px 3px rgba(23,41,60,.04); overflow: hidden; margin: 10px 14px 0; }
+  .folder { display: flex; align-items: center; gap: 9px; padding: 12px 15px; font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--line); background: var(--folder-bg); }
+  .folder svg { flex: none; color: var(--primary); }
+  .folder .cnt { font-size: 11px; font-weight: 400; color: var(--faint); margin-left: auto; }
+  .slot { display: flex; align-items: center; gap: 10px; padding: 11px 15px; border-bottom: 1px solid var(--row-line); }
+  .s-main { min-width: 0; flex: 1; }
+  .s-time { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .s-prog { margin-top: 2px; font-size: 12px; color: var(--sub); }
+  .s-side { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+  .s-price { font-size: 14px; font-weight: 700; color: var(--primary); font-variant-numeric: tabular-nums; }
+  .s-dur { font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .slot.sel { background: var(--primary-soft); box-shadow: inset 3px 0 0 var(--primary); }
+  .slot.sel .s-pill { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px; color: var(--primary); background: var(--card); display: inline-flex; align-items: center; gap: 5px; }
+  .slot.sel .s-pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--primary); }
+  .ctx-note { margin: 10px 18px 0; font-size: 11px; color: var(--faint); line-height: 1.7; }
+
+  .btn-primary { min-height: 44px; padding: 0 26px; border: none; border-radius: 12px; background: var(--primary); color: var(--on-primary); font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+  .btn-ghost { min-height: 44px; padding: 0 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--sub); font-size: 14px; font-weight: 600; font-family: inherit; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+
+  /* ===== 弹层（:target） ===== */
+  .dw-overlay { position: fixed; inset: 0; z-index: 60; display: none; align-items: flex-end; justify-content: center; }
+  .dw-overlay:target { display: flex; }
+  .dw-mask { position: absolute; inset: 0; background: rgba(15, 28, 42, 0.45); }
+  .dw { position: relative; width: 100%; max-width: 420px; max-height: 82vh; display: flex; flex-direction: column; background: var(--card); border-radius: var(--radius) var(--radius) 0 0; box-shadow: 0 -6px 30px rgba(23, 41, 60, 0.18); }
+  .dw-head { display: flex; align-items: flex-start; gap: 8px; padding: 16px 8px 12px 18px; border-bottom: 1px solid var(--line); flex: none; }
+  .dw-head-main { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .dw-title { font-size: 16px; font-weight: 700; line-height: 1.45; }
+  .dw-sub { font-size: 11px; color: var(--faint); }
+  .dw-close { flex: none; width: 44px; height: 44px; margin: -8px -2px 0 0; border: none; border-radius: 12px; background: none; color: var(--sub); display: flex; align-items: center; justify-content: center; text-decoration: none; }
+  .dw-body { overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+
+  /* 确认汇总行（f-row 行族） */
+  .rows { padding: 4px 0 8px; }
+  .r-row { display: flex; align-items: baseline; gap: 12px; padding: 10px 18px; border-bottom: 1px solid var(--row-line); font-size: 13px; }
+  .r-row:last-child { border-bottom: none; }
+  .r-k { flex: none; width: 52px; color: var(--faint); font-size: 12px; }
+  .r-v { flex: 1; min-width: 0; font-weight: 600; word-break: break-all; }
+  .r-v small { display: block; font-size: 11px; font-weight: 400; color: var(--sub); margin-top: 2px; }
+  .r-v.price { color: var(--primary); font-size: 16px; font-variant-numeric: tabular-nums; }
+
+  /* 免支付横幅（primary-soft） */
+  .free-banner { margin: 10px 18px 4px; padding: 10px 12px; border-radius: 12px; background: var(--primary-soft); font-size: 12px; color: var(--primary); font-weight: 600; line-height: 1.6; }
+  .free-banner small { display: block; font-weight: 400; color: var(--sub); font-size: 11px; margin-top: 2px; }
+
+  .dw-book { border-top: 1px solid var(--line); padding: 12px 18px calc(14px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 8px; background: var(--card); flex: none; }
+  .dw-book .btn-primary, .dw-book .btn-ghost { flex: 1; }
+
+  /* 成功态：lamp 灯语言放大 */
+  .ok-mark { width: 58px; height: 58px; border-radius: 50%; background: var(--idle); margin: 22px auto 0; box-shadow: 0 0 0 10px var(--idle-soft); display: flex; align-items: center; justify-content: center; color: var(--on-primary); }
+  .ok-title { text-align: center; font-size: 17px; font-weight: 700; margin-top: 16px; padding: 0 18px; }
+  .ok-sub { text-align: center; font-size: 12px; color: var(--sub); margin-top: 5px; padding: 0 18px; line-height: 1.6; }
+
+  /* 平铺展示 */
+  .demo { padding: 0 14px 8px; margin-top: 14px; }
+  .demo-h { font-size: 12px; font-weight: 700; letter-spacing: 1px; color: var(--faint); margin: 18px 4px 10px; }
+  .demo-note { font-size: 11px; color: var(--sub); line-height: 1.7; margin: 0 4px 10px; }
+  .demo-stage { background: var(--page-bg); border-radius: 12px; padding: 16px 12px; margin-bottom: 12px; }
+  .dw.static { position: relative; max-height: none; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 1px 3px rgba(23,41,60,.04); margin: 0 auto; }
+  .dw.static .dw-body { overflow: visible; }
+
+  footer { padding: 18px 14px 26px; text-align: center; font-size: 11px; color: var(--faint); line-height: 1.7; }
+
+  @media (min-width: 1024px) {
+    .dw-overlay { align-items: center; padding: 24px; }
+    .dw { border-radius: var(--radius); box-shadow: 0 18px 50px rgba(23, 41, 60, 0.28); max-height: min(82vh, 640px); }
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg: #141d29; --card: #1a2431; --ink: #e6edf6; --sub: #a6b4c6; --faint: #7f92a7;
+      --line: #2a3646; --primary: #5c9df5; --primary-soft: #1f3355; --on-primary: #0e1c30;
+      --idle: #3ecf8e; --idle-soft: #17382b; --busy: #f0a94a; --busy-soft: #3a2d14;
+      --fault: #8a9bae; --fault-soft: #232f3e; --page-bg: #0c121c; --folder-bg: #202b3a;
+      --folder-hover: #26344a; --row-line: #263243; --row-hover: #1f2f47;
+      --busy-line: #6a5320; --busy-deep: #eec27c;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="proto">
+    <span><b>确认弹层 + 成功态</b> · 免支付 · 确认即生效</span>
+    <span class="grow fake">样品数据 · 虚构</span>
+    <a href="index.html">← 原型目录</a>
+    <span class="hint">点「去确认」打开确认层 → 「确认预约」→ 成功层 → 「查看我的预约」。两层也在页底平铺。</span>
+  </div>
+
+  <div class="page-head">
+    <a class="back" href="wall-a.html" aria-label="返回时段墙">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </a>
+    <div class="ph-main">
+      <div class="ph-title">确认预约</div>
+      <div class="ph-sub">时段墙A · 已选中一个时段</div>
+    </div>
+  </div>
+
+  <div class="m-ctx">
+    <span class="lamp"></span>
+    <div class="m-ctx-main">
+      <div class="m-ctx-name">东1层1号机 <span style="font-size:11px;font-weight:400;color:var(--faint);">13号楼</span></div>
+      <div class="m-ctx-sub"><span class="tag">洗衣机</span><span class="m-ctx-state">空闲</span></div>
+    </div>
+    <span class="bk-pill">可预约</span>
+  </div>
+
+  <div class="file-panel">
+    <div class="folder">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 6.5A2 2 0 0 1 5 4.5h4l2 2.5h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      今天 · 9月29日 周二 <span class="cnt">16 个时段 · 可约 6</span>
+    </div>
+    <div class="slot sel">
+      <div class="s-main"><div class="s-time">15:00 – 15:40</div><div class="s-prog">标准洗 · 日常衣量</div></div>
+      <div class="s-side"><span class="s-price">¥4.00</span><span class="s-dur">40 分钟</span></div>
+      <span class="s-pill">已选中</span>
+    </div>
+  </div>
+  <p class="ctx-note">以上为时段墙A 选中后的局部回显（原型静态）；实作中本页即为弹层，不再有中间页。</p>
+
+  <div class="demo">
+    <a class="btn-primary" href="#cf" style="display:flex;margin: 6px 4px 0;">去确认（打开确认弹层）</a>
+
+    <div class="demo-h">状态① 确认弹层（主稿）</div>
+    <p class="demo-note">
+      官方 reserveCreate 无支付环节（免支付、确认即生效），因此确认层职责 = 把「机器 / 时段 / 程序 / 价格」四要素一次讲清 + 拦住误触。
+      汇总行 = 现站明细 f-row 行族；免支付横幅 = bk-pill 同色对。
+    </p>
+    <div class="demo-stage">
+      <div class="dw static">
+        <div class="dw-head">
+          <div class="dw-head-main">
+            <div class="dw-title">确认预约</div>
+            <div class="dw-sub">确认后时段立即锁定，请按时到场</div>
+          </div>
+        </div>
+        <div class="dw-body">
+          <div class="rows">
+            <div class="r-row"><span class="r-k">机器</span><span class="r-v">东1层1号机<small>13号楼 · 1层 · 洗衣机</small></span></div>
+            <div class="r-row"><span class="r-k">日期</span><span class="r-v">今天 9月29日 周二</span></div>
+            <div class="r-row"><span class="r-k">时段</span><span class="r-v">15:00 – 15:40<small>开场后 5 分钟内不到场视为放弃</small></span></div>
+            <div class="r-row"><span class="r-k">程序</span><span class="r-v">标准洗<small>日常衣量 · 中速脱水</small></span></div>
+            <div class="r-row"><span class="r-k">价格</span><span class="r-v price">¥4.00</span></div>
+          </div>
+          <div class="free-banner">免支付 · 确认即生效<small>费用按现有方式在机器上结算（投币 / 扫码），本预约不收一分钱</small></div>
+        </div>
+        <div class="dw-book">
+          <a class="btn-ghost" href="#close">再想想</a>
+          <a class="btn-primary" href="#ok">确认预约</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="demo-h">状态② 成功态</div>
+    <p class="demo-note">成功标记 = 现站「空闲灯」语言放大（idle 绿 + soft 光晕）；要点只留三条：什么时候、去哪台、超时规则。失败透明：若官方返回错误，原样翻译回执并保留所选时段，绝不自动重试。</p>
+    <div class="demo-stage">
+      <div class="dw static">
+        <div class="ok-mark">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg>
+        </div>
+        <div class="ok-title">预约成功</div>
+        <div class="ok-sub">东1层1号机（13号楼）<br>今天 15:00 – 15:40 · 标准洗 · ¥4.00 现场结算</div>
+        <div class="dw-body">
+          <div class="rows" style="margin-top:12px;">
+            <div class="r-row"><span class="r-k">状态</span><span class="r-v">待生效<small>到 15:00 自动转为「已生效」</small></span></div>
+            <div class="r-row"><span class="r-k">提醒</span><span class="r-v">开场后 5 分钟内不到场视为放弃<small>可在「我的预约单」随时取消</small></span></div>
+          </div>
+        </div>
+        <div class="dw-book">
+          <a class="btn-ghost" href="#close">完成</a>
+          <a class="btn-primary" href="my-reservations.html">查看我的预约</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>非官方工具 · 数据来自海乐生活<br>仅供同学们参考，以现场为准</footer>
+
+  <!-- ============ :target 弹层（可交互演示） ============ -->
+  <div class="dw-overlay" id="cf">
+    <a class="dw-mask" href="#close" aria-label="取消"></a>
+    <div class="dw" role="dialog" aria-modal="true">
+      <div class="dw-head">
+        <div class="dw-head-main">
+          <div class="dw-title">确认预约</div>
+          <div class="dw-sub">确认后时段立即锁定，请按时到场</div>
+        </div>
+        <a class="dw-close" href="#close" aria-label="关闭">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </a>
+      </div>
+      <div class="dw-body">
+        <div class="rows">
+          <div class="r-row"><span class="r-k">机器</span><span class="r-v">东1层1号机<small>13号楼 · 1层 · 洗衣机</small></span></div>
+          <div class="r-row"><span class="r-k">日期</span><span class="r-v">今天 9月29日 周二</span></div>
+          <div class="r-row"><span class="r-k">时段</span><span class="r-v">15:00 – 15:40<small>开场后 5 分钟内不到场视为放弃</small></span></div>
+          <div class="r-row"><span class="r-k">程序</span><span class="r-v">标准洗<small>日常衣量 · 中速脱水</small></span></div>
+          <div class="r-row"><span class="r-k">价格</span><span class="r-v price">¥4.00</span></div>
+        </div>
+        <div class="free-banner">免支付 · 确认即生效<small>费用按现有方式在机器上结算（投币 / 扫码），本预约不收一分钱</small></div>
+      </div>
+      <div class="dw-book">
+        <a class="btn-ghost" href="#close">再想想</a>
+        <a class="btn-primary" href="#ok">确认预约</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="dw-overlay" id="ok">
+    <a class="dw-mask" href="#close" aria-label="关闭"></a>
+    <div class="dw" role="dialog" aria-modal="true">
+      <div class="ok-mark">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg>
+      </div>
+      <div class="ok-title">预约成功</div>
+      <div class="ok-sub">东1层1号机（13号楼）<br>今天 15:00 – 15:40 · 标准洗 · ¥4.00 现场结算</div>
+      <div class="dw-body">
+        <div class="rows" style="margin-top:12px;">
+          <div class="r-row"><span class="r-k">状态</span><span class="r-v">待生效<small>到 15:00 自动转为「已生效」</small></span></div>
+          <div class="r-row"><span class="r-k">提醒</span><span class="r-v">开场后 5 分钟内不到场视为放弃<small>可在「我的预约单」随时取消</small></span></div>
+        </div>
+      </div>
+      <div class="dw-book">
+        <a class="btn-ghost" href="#close">完成</a>
+        <a class="btn-primary" href="my-reservations.html">查看我的预约</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

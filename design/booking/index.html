@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>预约原型目录 —— M2 预约功能静态参考稿（多方案对比）</title>
+<style>
+  /* =====================================================================
+   * M2 预约静态参考原型 · 目录页
+   * 基调：不是新设计，是「现有站 + 预约增量」——
+   * 100% 复用现站令牌（design/refs/v1-fresh-blue.html + src/style.css）
+   * ===================================================================== */
+  :root {
+    color-scheme: light;
+    --bg: #eef3f8; --card: #ffffff; --ink: #17293c; --sub: #5c6f82; --faint: #9db0c2;
+    --line: #e3eaf2; --primary: #2e7df0; --primary-soft: #e5effe;
+    --idle: #17a35c; --idle-soft: #e2f6ec; --busy: #e8951f; --busy-soft: #fdf1dc;
+    --fault: #a7b1bc; --fault-soft: #f0f3f6; --radius: 16px;
+    --page-bg: #dfe7ef; --on-primary: #ffffff; --folder-bg: #fafcfe; --folder-hover: #f0f6fd;
+    --row-line: #f1f5f9; --row-hover: #f4f9fe; --busy-line: #f2dcb2; --busy-deep: #7c5310;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; background: var(--page-bg); color: var(--ink); -webkit-text-size-adjust: 100%; }
+  .wrap { max-width: 414px; margin: 0 auto; min-height: 100vh; background: var(--bg); }
+
+  .proto { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 9px 14px; background: var(--primary-soft); border-bottom: 1px solid var(--line); font-size: 11px; color: var(--sub); }
+  .proto b { color: var(--primary); font-weight: 700; }
+  .proto .grow { margin-left: auto; }
+  .proto .fake { color: var(--faint); }
+
+  .hero { padding: 18px 18px 6px; }
+  .hero h1 { font-size: 24px; line-height: 1.3; letter-spacing: -0.3px; }
+  .hero h1 em { font-style: normal; color: var(--primary); }
+  .hero p { margin-top: 8px; font-size: 13px; line-height: 1.7; color: var(--sub); }
+
+  .main { padding: 8px 14px 10px; }
+  .sec { font-size: 12px; font-weight: 700; letter-spacing: 1px; color: var(--faint); margin: 20px 4px 10px; }
+  .sec b { color: var(--primary); }
+
+  /* 决策卡：b-group 卡族 */
+  .opt { display: block; background: var(--card); border-radius: var(--radius); padding: 13px 14px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(23,41,60,.04); text-decoration: none; color: inherit; cursor: pointer; -webkit-tap-highlight-color: rgba(46,125,240,.14); }
+  .opt:active { opacity: .82; }
+  .opt-head { display: flex; align-items: center; gap: 8px; }
+  .opt-badge { flex: none; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; color: var(--primary); background: var(--primary-soft); }
+  .opt-badge.alt { color: var(--idle); background: var(--idle-soft); }
+  .opt-badge.sup { color: var(--sub); background: var(--bg); border: 1px solid var(--line); }
+  .opt-title { font-size: 15px; font-weight: 700; min-width: 0; }
+  .opt-go { margin-left: auto; flex: none; color: var(--faint); font-size: 14px; }
+  .opt-desc { margin-top: 8px; font-size: 12.5px; color: var(--sub); line-height: 1.65; }
+  .opt-desc b { color: var(--ink); }
+  .opt-tags { margin-top: 9px; display: flex; flex-wrap: wrap; gap: 5px; }
+  .tag { font-size: 10px; color: var(--sub); background: var(--bg); border-radius: 4px; padding: 2px 7px; white-space: nowrap; }
+
+  .note-card { background: var(--card); border-radius: var(--radius); padding: 13px 15px; box-shadow: 0 1px 3px rgba(23,41,60,.04); font-size: 12px; color: var(--sub); line-height: 1.75; }
+  .note-card b { color: var(--ink); }
+  .note-card + .note-card { margin-top: 10px; }
+
+  .flow { background: var(--card); border-radius: var(--radius); padding: 12px 14px; box-shadow: 0 1px 3px rgba(23,41,60,.04); }
+  .flow-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 4px; font-size: 12px; color: var(--sub); line-height: 2; }
+  .flow-line a { color: var(--primary); font-weight: 600; text-decoration: none; border-bottom: 1px dotted var(--primary); }
+  .flow-line i { font-style: normal; color: var(--faint); }
+
+  footer { padding: 18px 14px 26px; text-align: center; font-size: 11px; color: var(--faint); line-height: 1.7; }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg: #141d29; --card: #1a2431; --ink: #e6edf6; --sub: #a6b4c6; --faint: #7f92a7;
+      --line: #2a3646; --primary: #5c9df5; --primary-soft: #1f3355; --on-primary: #0e1c30;
+      --idle: #3ecf8e; --idle-soft: #17382b; --busy: #f0a94a; --busy-soft: #3a2d14;
+      --fault: #8a9bae; --fault-soft: #232f3e; --page-bg: #0c121c; --folder-bg: #202b3a;
+      --folder-hover: #26344a; --row-line: #263243; --row-hover: #1f2f47;
+      --busy-line: #6a5320; --busy-deep: #eec27c;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="proto">
+    <span><b>原型目录</b> · M2 预约功能 · 静态参考稿（多方案对比）</span>
+    <span class="grow fake">样品数据 · 虚构</span>
+  </div>
+
+  <div class="hero">
+    <h1>现有站 <em>+ 预约增量</em></h1>
+    <p>这不是一次改版：九页原型里，首页/抽屉/明细全部照抄现站（V1 清爽生活蓝），只在预约相关处做加法。视觉令牌零新增——新元素（药丸/角标/时段行/网格）全部由现站色对派生。</p>
+  </div>
+
+  <div class="main">
+
+    <div class="sec">决策点 ① · <b>预约入口</b>（三案递进，可单选可叠加）</div>
+
+    <a class="opt" href="entry-a.html">
+      <div class="opt-head"><span class="opt-badge">入口 A</span><span class="opt-title">抽屉内预约按钮 · 最小增量</span><span class="opt-go">›</span></div>
+      <p class="opt-desc">现有机器详情抽屉底部加一条操作栏「<b>预约 · 选时段</b>」，与既有信息区零冲突。页底附 A-2 备选（程序行内入口）。</p>
+      <div class="opt-tags"><span class="tag">改动最小</span><span class="tag">先看价格再约</span><span class="tag">入口藏一层</span></div>
+    </a>
+
+    <a class="opt" href="entry-c.html">
+      <div class="opt-head"><span class="opt-badge">入口 C</span><span class="opt-title">楼栋计数 + 机器卡角标 + 抽屉主按钮</span><span class="opt-go">›</span></div>
+      <p class="opt-desc">楼栋头「<b>可预约 N 台</b>」与「N 台 · 空闲 M」并列；可约机器卡右下角「<b>可预约</b>」角标（与楼层角标同族）；抽屉同 A。首页一眼可见哪些楼开了预约。</p>
+      <div class="opt-tags"><span class="tag">首页可见性</span><span class="tag">A 的超集</span><span class="tag">未开楼栋零改动</span></div>
+    </a>
+
+    <a class="opt" href="entry-d.html">
+      <div class="opt-head"><span class="opt-badge">入口 D</span><span class="opt-title">方案C 全部 + 全局入口横幅</span><span class="opt-go">›</span></div>
+      <p class="opt-desc">在 hero 与查询面板之间加「<b>洗衣机预约上线了</b>」横幅（去预约 / 我的预约单）。落位判断：现站无顶栏，横幅比顶栏更贴现站卡片语言；顶栏备选见页底 D-2。</p>
+      <div class="opt-tags"><span class="tag">C 的超集</span><span class="tag">运营可下线</span><span class="tag">全局可见</span></div>
+    </a>
+
+    <div class="note-card">递进关系：<b>A ⊂ C ⊂ D</b>。A 保底可单独上线；C 补首页可见性；D 再补「不知从哪进」的全局动线。若担心首屏信息密度，可 C 起步、横幅等开学季再挂。</div>
+
+    <div class="sec">决策点 ② · <b>时段墙</b>（二选一）</div>
+
+    <a class="opt" href="wall-a.html">
+      <div class="opt-head"><span class="opt-badge alt">时段墙 A</span><span class="opt-title">单机纵向时段列表</span><span class="opt-go">›</span></div>
+      <p class="opt-desc">日期页签（今天/明天/周四）+ 当日时段行：时间段 · 程序 · 价格 · 状态（可约/已满/已过）+ 选中态。行样式 = 现站明细 f-row 族，手机上信息密度最舒服。</p>
+      <div class="opt-tags"><span class="tag">逐台看</span><span class="tag">适合单机楼</span><span class="tag">默认推荐</span></div>
+    </a>
+
+    <a class="opt" href="wall-b.html">
+      <div class="opt-head"><span class="opt-badge alt">时段墙 B</span><span class="opt-title">全楼网格墙（行=时段 列=机器）</span><span class="opt-go">›</span></div>
+      <p class="opt-desc">楼栋 chips + 网格：一眼看全楼哪台哪个点空着。格子着色沿用三态令牌；≥6 列时格子偏小，单台楼建议自动回退成 A。</p>
+      <div class="opt-tags"><span class="tag">全局视野</span><span class="tag">跨机器比价</span><span class="tag">列多则挤</span></div>
+    </a>
+
+    <div class="sec">配套页 · <b>流程闭环</b>（与入口/时段墙选择无关）</div>
+
+    <a class="opt" href="login-modal.html">
+      <div class="opt-head"><span class="opt-badge sup">配套</span><span class="opt-title">懒登录弹窗</span><span class="opt-go">›</span></div>
+      <p class="opt-desc">手机号 + 验证码（示例号 138 0013 8000 虚构）；三状态：初始 / 60s 重发倒计时 / 登录中。只在点「预约」时弹出，数据边界按 ADR-0001。</p>
+    </a>
+
+    <a class="opt" href="confirm-success.html">
+      <div class="opt-head"><span class="opt-badge sup">配套</span><span class="opt-title">确认弹层 + 成功态</span><span class="opt-go">›</span></div>
+      <p class="opt-desc">机器/日期/时段/程序/价格五要素 + 免支付·确认即生效横幅；成功态 = 现站空闲灯语言放大。</p>
+    </a>
+
+    <a class="opt" href="my-reservations.html">
+      <div class="opt-head"><span class="opt-badge sup">配套</span><span class="opt-title">我的预约单</span><span class="opt-go">›</span></div>
+      <p class="opt-desc">四状态（待生效/已生效/已完成/已取消，沿用官方 appointmentState 语义）+ 取消二次确认 + 空态。</p>
+    </a>
+
+    <div class="sec">示例动线 · <b>一条完整预约</b></div>
+    <div class="flow">
+      <div class="flow-line">
+        <a href="entry-a.html">首页·抽屉</a><i>›</i>
+        <a href="login-modal.html">懒登录</a><i>›</i>
+        <a href="wall-a.html">时段墙A·选 15:00</a><i>›</i>
+        <a href="confirm-success.html">确认</a><i>›</i>
+        <a href="my-reservations.html">我的预约单</a>
+      </div>
+      <p style="margin-top:8px;font-size:11px;color:var(--faint);line-height:1.7;">示例时刻统一为今天 14:32（9月29日 周二）；主角机器 13号楼 东1层1号机（标准洗 ¥4.00/40 分 · 快速洗 ¥3.00/25 分 · 大物洗 ¥5.00/50 分，价格沿用真实口径）。</p>
+    </div>
+
+    <div class="sec">阅读说明</div>
+    <div class="note-card">
+      <b>纯静态无 JS</b>：交互态用 <b>:target</b>（抽屉/弹层）与 <b>:checked</b>（页签/筛选/取消确认）模拟，页面链接可真实跳转；<br>
+      <b>样品数据虚构</b>：机器名/楼栋名/价格沿用真实口径，时段占用与可约数量为虚构，每页角标注明；<br>
+      <b>视觉零新增</b>：色/圆角/字号全部取自 src/style.css 令牌，深色模式只重定义令牌（同现站做法）；<br>
+      <b>画幅</b>：手机 390px 竖屏（微信 webview）优先，桌面加宽不破格（弹层居中）。
+    </div>
+  </div>
+
+  <footer>非官方工具 · 数据来自海乐生活<br>仅供同学们参考，以现场为准</footer>
+
+</div>
+</body>
+</html>

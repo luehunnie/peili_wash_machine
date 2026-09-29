@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>预约原型 · 懒登录弹窗 —— 手机号 + 验证码</title>
+<style>
+  /* =====================================================================
+   * M2 预约静态参考原型 · 懒登录弹窗
+   * 触发链：入口页 → 抽屉「预约」→ 未登录 → 弹登录（ADR-0001：懒登录，
+   * token 只存 {token,过期}，退出即删；手机号等资料永不取永不存）
+   * 基底 = 现站令牌；弹层形态 = 抽屉同族底部工作表
+   * ===================================================================== */
+  :root {
+    color-scheme: light;
+    --bg: #eef3f8; --card: #ffffff; --ink: #17293c; --sub: #5c6f82; --faint: #9db0c2;
+    --line: #e3eaf2; --primary: #2e7df0; --primary-soft: #e5effe;
+    --idle: #17a35c; --idle-soft: #e2f6ec; --busy: #e8951f; --busy-soft: #fdf1dc;
+    --fault: #a7b1bc; --fault-soft: #f0f3f6; --radius: 16px;
+    --page-bg: #dfe7ef; --on-primary: #ffffff; --folder-bg: #fafcfe; --folder-hover: #f0f6fd;
+    --row-line: #f1f5f9; --row-hover: #f4f9fe; --busy-line: #f2dcb2; --busy-deep: #7c5310;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; background: var(--page-bg); color: var(--ink); -webkit-text-size-adjust: 100%; }
+  .wrap { max-width: 414px; margin: 0 auto; min-height: 100vh; background: var(--bg); }
+
+  .head { display: flex; align-items: center; gap: 9px; padding: 14px 18px 12px; }
+  .logo { width: 34px; height: 34px; border-radius: 11px; background: var(--primary); color: var(--on-primary); display: flex; align-items: center; justify-content: center; flex: none; }
+  .logo svg { display: block; }
+  .wordmark { font-size: 15px; font-weight: 700; letter-spacing: 0.5px; }
+  .wordmark small { display: block; font-size: 10px; font-weight: 400; color: var(--faint); letter-spacing: 2px; }
+
+  .hero { padding: 10px 18px 18px; }
+  .hero h1 { font-size: 30px; line-height: 1.2; letter-spacing: -0.5px; }
+  .hero h1 em { font-style: normal; color: var(--primary); }
+  .hero p { margin-top: 8px; font-size: 14px; line-height: 1.65; color: var(--sub); }
+  .fresh { margin-top: 10px; font-size: 11px; color: var(--faint); display: flex; align-items: center; gap: 5px; padding: 6px 0; }
+  .fresh i { width: 6px; height: 6px; border-radius: 50%; background: var(--idle); flex: none; box-shadow: 0 0 0 3px var(--idle-soft); }
+
+  .array { padding: 4px 14px 6px; }
+  .sec-title { font-size: 16px; font-weight: 700; padding: 6px 4px 10px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .sec-title span { font-size: 11px; font-weight: 400; color: var(--faint); }
+  .b-group { background: var(--card); border-radius: var(--radius); padding: 13px 12px 13px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(23,41,60,.04); }
+  .b-head { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 10px; gap: 8px; }
+  .b-name { font-size: 15px; font-weight: 700; min-width: 0; }
+  .b-name small { font-size: 11px; font-weight: 400; color: var(--faint); margin-left: 6px; }
+  .b-idle { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; flex: none; }
+  .b-idle.some { color: var(--idle); background: var(--idle-soft); }
+  .h-badges { display: flex; gap: 6px; align-items: center; flex: none; }
+  .bk-pill { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; color: var(--primary); background: var(--primary-soft); white-space: nowrap; flex: none; }
+  .m-row { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .m-row::-webkit-scrollbar { display: none; }
+  .m-card { flex: none; width: 128px; border: 1px solid var(--line); border-radius: 13px; padding: 10px 10px 9px; display: flex; flex-direction: column; gap: 6px; background: var(--card); }
+  .m-top { display: flex; align-items: center; justify-content: space-between; }
+  .lamp { width: 14px; height: 14px; border-radius: 50%; flex: none; }
+  .m-card.idle .lamp { background: var(--idle); box-shadow: 0 0 0 4px var(--idle-soft); }
+  .m-card.busy .lamp { background: var(--busy); box-shadow: 0 0 0 4px var(--busy-soft); }
+  .floor { font-size: 10px; color: var(--faint); padding: 2px 7px; border-radius: 5px; background: var(--bg); }
+  .m-name { font-size: 12px; font-weight: 600; line-height: 1.4; word-break: break-all; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; min-height: 3em; }
+  .m-state { font-size: 11px; }
+  .m-card.idle .m-state { color: var(--idle); font-weight: 600; }
+  .m-card.busy .m-state { color: var(--busy); }
+  .m-foot { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .bk-chip { font-size: 10px; font-weight: 600; color: var(--primary); padding: 2px 7px; border-radius: 5px; background: var(--primary-soft); white-space: nowrap; flex: none; }
+
+  footer { padding: 18px 14px 26px; text-align: center; font-size: 11px; color: var(--faint); line-height: 1.7; }
+
+  .btn-primary { min-height: 44px; padding: 0 26px; border: none; border-radius: 12px; background: var(--primary); color: var(--on-primary); font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+  .btn-off { min-height: 44px; padding: 0 26px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--faint); font-size: 14px; font-weight: 600; font-family: inherit; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; cursor: default; }
+
+  /* 抽屉 + 弹层（:target 打开） */
+  .tappable { cursor: pointer; -webkit-tap-highlight-color: rgba(46, 125, 240, 0.14); }
+  .tappable:active { opacity: 0.82; }
+  a.m-card { color: inherit; text-decoration: none; }
+  .dw-overlay { position: fixed; inset: 0; z-index: 60; display: none; align-items: flex-end; justify-content: center; }
+  .dw-overlay:target { display: flex; }
+  .dw-mask { position: absolute; inset: 0; background: rgba(15, 28, 42, 0.45); }
+  .dw { position: relative; width: 100%; max-width: 420px; max-height: 75vh; display: flex; flex-direction: column; background: var(--card); border-radius: var(--radius) var(--radius) 0 0; box-shadow: 0 -6px 30px rgba(23, 41, 60, 0.18); }
+  .dw-head { display: flex; align-items: flex-start; gap: 8px; padding: 14px 8px 12px 18px; border-bottom: 1px solid var(--line); flex: none; }
+  .dw-head-main { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 7px; }
+  .dw-title { font-size: 16px; font-weight: 700; line-height: 1.45; word-break: break-all; }
+  .dw-sub { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+  .dw-state { font-size: 12px; font-weight: 600; }
+  .dw-state.idle { color: var(--idle); }
+  .dw-close { flex: none; width: 44px; height: 44px; margin: -8px -2px 0 0; border: none; border-radius: 12px; background: none; color: var(--sub); display: flex; align-items: center; justify-content: center; text-decoration: none; }
+  .dw-body { overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: 2px 0 18px; }
+  .dw-content { padding: 0 18px; }
+  .dw-sec { font-size: 12px; font-weight: 600; letter-spacing: 1px; color: var(--faint); padding: 12px 0 2px; }
+  .dw-prog { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--row-line); }
+  .dw-prog:last-child { border-bottom: none; }
+  .dw-prog-main { min-width: 0; flex: 1; }
+  .dw-prog-name { font-size: 14px; font-weight: 700; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; word-break: break-all; }
+  .dw-prog-feature { margin-top: 3px; font-size: 12px; line-height: 1.55; color: var(--sub); word-break: break-all; }
+  .dw-prog-side { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+  .dw-prog-price { font-size: 15px; font-weight: 700; color: var(--primary); font-variant-numeric: tabular-nums; }
+  .dw-prog-unit { font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .dw-book { border-top: 1px solid var(--line); padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 8px; background: var(--card); flex: none; }
+  .dw-book .btn-primary { flex: 1; }
+  @media (min-width: 1024px) {
+    .dw-overlay { align-items: center; padding: 24px; }
+    .dw { border-radius: var(--radius); box-shadow: 0 18px 50px rgba(23, 41, 60, 0.28); max-height: min(75vh, 640px); }
+  }
+
+  /* =====================================================================
+   * M2 预约增量（本页唯一新增）
+   * ===================================================================== */
+  .proto { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 9px 14px; background: var(--primary-soft); border-bottom: 1px solid var(--line); font-size: 11px; color: var(--sub); }
+  .proto b { color: var(--primary); font-weight: 700; }
+  .proto a { color: var(--primary); font-weight: 600; text-decoration: none; }
+  .proto .grow { margin-left: auto; }
+  .proto .fake { color: var(--faint); }
+  .proto .hint { flex-basis: 100%; color: var(--faint); font-size: 10px; }
+
+  /* 登录弹窗：抽屉同族工作表 */
+  .lg-title { font-size: 16px; font-weight: 700; padding: 16px 18px 2px; }
+  .lg-sub { font-size: 12px; color: var(--sub); line-height: 1.6; padding: 0 18px 4px; }
+  .lg-form { padding: 10px 18px 4px; display: flex; flex-direction: column; gap: 10px; }
+  .field { display: flex; gap: 8px; }
+  .field input {
+    flex: 1; min-height: 44px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--bg); padding: 0 14px; font-size: 14px; color: var(--ink); outline: none;
+    font-family: inherit; min-width: 0; letter-spacing: 0.5px;
+  }
+  .field input::placeholder { color: var(--faint); letter-spacing: 0; }
+  .code-btn {
+    flex: none; min-height: 44px; padding: 0 14px; border: 1px solid var(--primary);
+    border-radius: 12px; background: var(--card); color: var(--primary);
+    font-size: 13px; font-weight: 600; font-family: inherit; text-decoration: none;
+    display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; cursor: pointer;
+  }
+  /* 倒计时态：不可点（chip 的灰底族） */
+  .code-btn.waiting { border-color: var(--line); background: var(--bg); color: var(--faint); cursor: default; }
+  .lg-submit { padding: 6px 18px 0; display: flex; flex-direction: column; gap: 8px; }
+  .lg-submit .btn-primary, .lg-submit .btn-off { flex: 1; }
+  .lg-privacy { font-size: 10px; color: var(--faint); line-height: 1.6; padding: 10px 18px calc(16px + env(safe-area-inset-bottom, 0px)); }
+
+  /* 平铺展示 */
+  .demo { padding: 0 14px 8px; }
+  .demo-h { font-size: 12px; font-weight: 700; letter-spacing: 1px; color: var(--faint); margin: 18px 4px 10px; }
+  .demo-note { font-size: 11px; color: var(--sub); line-height: 1.7; margin: 0 4px 10px; }
+  .demo-stage { background: var(--page-bg); border-radius: 12px; padding: 16px 12px; margin-bottom: 12px; }
+  .dw.static { position: relative; max-height: none; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 1px 3px rgba(23,41,60,.04); margin: 0 auto; }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg: #141d29; --card: #1a2431; --ink: #e6edf6; --sub: #a6b4c6; --faint: #7f92a7;
+      --line: #2a3646; --primary: #5c9df5; --primary-soft: #1f3355; --on-primary: #0e1c30;
+      --idle: #3ecf8e; --idle-soft: #17382b; --busy: #f0a94a; --busy-soft: #3a2d14;
+      --fault: #8a9bae; --fault-soft: #232f3e; --page-bg: #0c121c; --folder-bg: #202b3a;
+      --folder-hover: #26344a; --row-line: #263243; --row-hover: #1f2f47;
+      --busy-line: #6a5320; --busy-deep: #eec27c;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="proto">
+    <span><b>懒登录弹窗</b> · 手机号 + 验证码（入口页语境叠加）</span>
+    <span class="grow fake">样品数据 · 虚构</span>
+    <a href="index.html">← 原型目录</a>
+    <span class="hint">流程：点「培黎8号楼3层洗鞋机」卡片 → 抽屉 → 点「预约 · 选时段」→ 弹登录（未登录时）。三状态平铺见页底。</span>
+  </div>
+
+  <div class="head">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="12" cy="13" r="4.5"/><circle cx="7.6" cy="6.4" r="1" fill="currentColor" stroke="none"/></svg>
+    </div>
+    <div class="wordmark">培黎洗衣速查<small>PEILI LAUNDRY</small></div>
+  </div>
+
+  <div class="hero">
+    <h1>今晚，<em>哪台空着？</em></h1>
+    <p>躺在宿舍就能看到全校洗衣机的实时状态——空机亮绿灯，占用有倒计时，见空再下楼，不白跑。</p>
+    <div class="fresh"><i></i>14:32 更新 · 每 30 秒自动刷新（点击立即刷新）</div>
+  </div>
+
+  <!-- 入口页语境（方案C 增量，仅示意 8号公寓；完整首页见 entry-c.html） -->
+  <div class="array">
+    <div class="sec-title">洗衣机总览 <span>入口页语境 · 仅示意一栋</span></div>
+    <div class="b-group">
+      <div class="b-head">
+        <div class="b-name">8号公寓<small>1–6 层 · 7 台</small></div>
+        <span class="h-badges"><span class="b-idle some">空闲 6 / 7</span><span class="bk-pill">可预约 1</span></span>
+      </div>
+      <div class="m-row">
+        <a class="m-card idle tappable" href="#dw1"><div class="m-top"><span class="lamp"></span><span class="floor">1层</span></div><span class="m-name">培黎8号楼1层1号机</span><span class="m-state">空闲</span></a>
+        <a class="m-card idle tappable" href="#dw1"><div class="m-top"><span class="lamp"></span><span class="floor">2层</span></div><span class="m-name">培黎8号楼2层1号机</span><span class="m-state">空闲</span></a>
+        <a class="m-card idle tappable" href="#dw1"><div class="m-top"><span class="lamp"></span><span class="floor">3层</span></div><span class="m-name">培黎8号楼3层1号机</span><span class="m-state">空闲</span></a>
+        <a class="m-card idle tappable" href="#dw1"><div class="m-top"><span class="lamp"></span><span class="floor">3层</span></div><span class="m-name">培黎8号楼3层洗鞋机</span><div class="m-foot"><span class="m-state">空闲</span><span class="bk-chip">可预约</span></div></a>
+        <a class="m-card idle tappable" href="#dw1"><div class="m-top"><span class="lamp"></span><span class="floor">4层</span></div><span class="m-name">培黎8号楼4层1号机</span><span class="m-state">空闲</span></a>
+      </div>
+    </div>
+  </div>
+
+  <footer>非官方工具 · 数据来自海乐生活<br>仅供同学们参考，以现场为准</footer>
+
+  <!-- ============ 平铺展示：登录弹窗三状态 ============ -->
+  <div class="demo">
+    <div class="demo-h">登录弹窗 · 三状态平铺（主稿）</div>
+    <p class="demo-note">
+      懒登录：只在「要点预约了」才弹，平时浏览零打扰。形态 = 现站抽屉同族底部工作表；输入框 = 搜索框同款；「获取验证码」= 主色描边按钮；提交 = .btn-primary。
+      数据边界按 ADR-0001：本站只存 token，不存手机号；示例号 138 0013 8000 为虚构。
+    </p>
+
+    <div class="demo-h">状态① 初始 · 未输入，提交不可点</div>
+    <div class="demo-stage">
+      <div class="dw static">
+        <div class="dw-head">
+          <div class="dw-head-main">
+            <div class="dw-title">手机号登录</div>
+            <div class="dw-sub"><span class="dw-state" style="color:var(--sub);font-weight:400;">登录后才能预约和查看「我的预约单」</span></div>
+          </div>
+          <a class="dw-close" href="#close" aria-label="关闭">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </a>
+        </div>
+        <div class="lg-form">
+          <div class="field">
+            <input type="tel" inputmode="numeric" maxlength="11" placeholder="输入手机号" aria-label="手机号">
+          </div>
+          <div class="field">
+            <input type="tel" inputmode="numeric" maxlength="6" placeholder="6 位验证码" aria-label="验证码">
+            <a class="code-btn" href="#lg2">获取验证码</a>
+          </div>
+        </div>
+        <div class="lg-submit">
+          <span class="btn-off">登录</span>
+        </div>
+        <p class="lg-privacy">仅用于预约下单与查询我的预约单；本站不收集、不保存手机号与其它资料。未注册的海乐账号将自动注册。</p>
+      </div>
+    </div>
+
+    <div class="demo-h">状态② 验证码已发 · 60s 重发倒计时，提交可点</div>
+    <div class="demo-stage">
+      <div class="dw static">
+        <div class="dw-head">
+          <div class="dw-head-main">
+            <div class="dw-title">手机号登录</div>
+            <div class="dw-sub"><span class="dw-state" style="color:var(--sub);font-weight:400;">验证码已发送至 138 0013 8000</span></div>
+          </div>
+          <a class="dw-close" href="#close" aria-label="关闭">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </a>
+        </div>
+        <div class="lg-form">
+          <div class="field">
+            <input type="tel" value="138 0013 8000" readonly aria-label="手机号">
+          </div>
+          <div class="field">
+            <input type="tel" value="••••••" aria-label="验证码">
+            <span class="code-btn waiting">57s 后重发</span>
+          </div>
+        </div>
+        <div class="lg-submit">
+          <a class="btn-primary" href="wall-a.html">登录并继续预约</a>
+        </div>
+        <p class="lg-privacy">仅用于预约下单与查询我的预约单；本站不收集、不保存手机号与其它资料。</p>
+      </div>
+    </div>
+
+    <div class="demo-h">状态③ 提交中 · 按钮锁定（防重复提交）</div>
+    <div class="demo-stage">
+      <div class="dw static">
+        <div class="dw-head">
+          <div class="dw-head-main">
+            <div class="dw-title">手机号登录</div>
+            <div class="dw-sub"><span class="dw-state" style="color:var(--sub);font-weight:400;">验证码已发送至 138 0013 8000</span></div>
+          </div>
+          <a class="dw-close" href="#close" aria-label="关闭">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </a>
+        </div>
+        <div class="lg-form">
+          <div class="field">
+            <input type="tel" value="138 0013 8000" readonly aria-label="手机号">
+          </div>
+          <div class="field">
+            <input type="tel" value="••••••" aria-label="验证码">
+            <span class="code-btn waiting">52s 后重发</span>
+          </div>
+        </div>
+        <div class="lg-submit">
+          <span class="btn-off">登录中…</span>
+        </div>
+        <p class="lg-privacy">失败透明：验证码错误会原样提示官方回执（如「验证码错误，请重试」），绝不自动重发。</p>
+      </div>
+    </div>
+
+    <div class="demo-h">取舍说明</div>
+    <p class="demo-note">
+      · 倒计时按官方口径 60s；每发一次新码作废上一条（原型文案不展开）。<br>
+      · 官方登录无密码项，仅短信码，故表单只有两格；「自动注册」为海乐官方行为，文案如实标注。<br>
+      · 弹层可被遮罩点击 / 右上 X 关闭（同抽屉交互），登录成功后回到触发前的预约流程，不再二次确认。
+    </p>
+  </div>
+
+  <!-- ============ 弹层（:target 链路演示） ============ -->
+  <!-- 抽屉：预约按钮 → 登录弹窗（懒登录触发点） -->
+  <div class="dw-overlay" id="dw1">
+    <a class="dw-mask" href="#close" aria-label="关闭详情"></a>
+    <div class="dw" role="dialog" aria-modal="true">
+      <div class="dw-head">
+        <div class="dw-head-main">
+          <div class="dw-title">培黎8号楼3层洗鞋机</div>
+          <div class="dw-sub"><span class="tag" style="font-size:10px;color:var(--sub);background:var(--bg);border-radius:4px;padding:2px 6px;">洗鞋机</span><span class="dw-state idle">空闲</span><span class="bk-pill">可预约</span></div>
+        </div>
+        <a class="dw-close" href="#close" aria-label="关闭详情">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </a>
+      </div>
+      <div class="dw-body">
+        <div class="dw-content">
+          <div class="dw-sec">程序与价格</div>
+          <div class="dw-prog">
+            <div class="dw-prog-main">
+              <div class="dw-prog-name"><span>标准洗鞋</span></div>
+              <p class="dw-prog-feature">日常鞋量 · 常温烘干</p>
+            </div>
+            <div class="dw-prog-side"><span class="dw-prog-price">¥4.00</span><span class="dw-prog-unit">40 分钟</span></div>
+          </div>
+          <div class="dw-prog">
+            <div class="dw-prog-main">
+              <div class="dw-prog-name"><span>快速洗鞋</span></div>
+              <p class="dw-prog-feature">单鞋快洗 · 25 分钟搞定</p>
+            </div>
+            <div class="dw-prog-side"><span class="dw-prog-price">¥3.00</span><span class="dw-prog-unit">25 分钟</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="dw-book">
+        <a class="btn-primary" href="#lg1">预约 · 选时段（未登录，先登录）</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 登录弹窗 · 状态①（可交互演示） -->
+  <div class="dw-overlay" id="lg1">
+    <a class="dw-mask" href="#close" aria-label="关闭登录"></a>
+    <div class="dw" role="dialog" aria-modal="true">
+      <div class="dw-head">
+        <div class="dw-head-main">
+          <div class="dw-title">手机号登录</div>
+          <div class="dw-sub"><span class="dw-state" style="color:var(--sub);font-weight:400;">登录后才能预约和查看「我的预约单」</span></div>
+        </div>
+        <a class="dw-close" href="#close" aria-label="关闭登录">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </a>
+      </div>
+      <div class="lg-form">
+        <div class="field">
+          <input type="tel" inputmode="numeric" maxlength="11" placeholder="输入手机号（示例 138 0013 8000）" aria-label="手机号">
+        </div>
+        <div class="field">
+          <input type="tel" inputmode="numeric" maxlength="6" placeholder="6 位验证码" aria-label="验证码">
+          <a class="code-btn" href="#lg2">获取验证码</a>
+        </div>
+      </div>
+      <div class="lg-submit">
+        <span class="btn-off">登录</span>
+      </div>
+      <p class="lg-privacy">仅用于预约下单与查询我的预约单；本站不收集、不保存手机号与其它资料。未注册的海乐账号将自动注册。</p>
+    </div>
+  </div>
+
+  <!-- 登录弹窗 · 状态②（倒计时演示） -->
+  <div class="dw-overlay" id="lg2">
+    <a class="dw-mask" href="#close" aria-label="关闭登录"></a>
+    <div class="dw" role="dialog" aria-modal="true">
+      <div class="dw-head">
+        <div class="dw-head-main">
+          <div class="dw-title">手机号登录</div>
+          <div class="dw-sub"><span class="dw-state" style="color:var(--sub);font-weight:400;">验证码已发送至 138 0013 8000（虚构示例）</span></div>
+        </div>
+        <a class="dw-close" href="#close" aria-label="关闭登录">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </a>
+      </div>
+      <div class="lg-form">
+        <div class="field">
+          <input type="tel" value="138 0013 8000" readonly aria-label="手机号">
+        </div>
+        <div class="field">
+          <input type="tel" value="••••••" aria-label="验证码">
+          <span class="code-btn waiting">57s 后重发</span>
+        </div>
+      </div>
+      <div class="lg-submit">
+        <a class="btn-primary" href="wall-a.html">登录并继续预约</a>
+      </div>
+      <p class="lg-privacy">仅用于预约下单与查询我的预约单；本站不收集、不保存手机号与其它资料。</p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
