@@ -4,6 +4,7 @@
  * ===================================================================== */
 
 :root {
+  color-scheme: light;
   --bg: #eef3f8;
   --card: #ffffff;
   --ink: #17293c;
@@ -19,6 +20,19 @@
   --fault: #a7b1bc;
   --fault-soft: #f0f3f6;
   --radius: 16px;
+  /* [T5] 收敛自组件规则里的硬编码色（亮色取值 = 原硬编码值，亮色视觉零变化）。
+     暗色模式只重定义令牌（见文末 prefers-color-scheme: dark 区块），不改组件规则。 */
+  --page-bg: #dfe7ef; /* body 底（wrap 外露出的页缘） */
+  --on-primary: #ffffff; /* 主色实底上的文字/图标（chip.on / go / btn-primary / logo） */
+  --folder-bg: #fafcfe; /* 明细文件夹头底 */
+  --folder-hover: #f0f6fd; /* 文件夹头 hover 底（桌面端） */
+  --row-line: #f1f5f9; /* 卡片内部分隔线（f-row / dw-prog） */
+  --row-hover: #f4f9fe; /* 明细行 hover 底（桌面端） */
+  --skel-base: #e8eef5; /* 骨架渐变基色 */
+  --skel-hi: #f4f8fc; /* 骨架渐变高光色 */
+  --scrollbar: #c9d6e4; /* 机器行细滚动条 */
+  --busy-line: #f2dcb2; /* 故障横幅描边 */
+  --busy-deep: #7c5310; /* 故障横幅正文（busy-soft 上的深字） */
 }
 
 * {
@@ -30,7 +44,7 @@
 body {
   font-family:
     system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  background: #dfe7ef;
+  background: var(--page-bg);
   color: var(--ink);
   -webkit-text-size-adjust: 100%;
 }
@@ -62,6 +76,7 @@ body {
   align-items: center;
   justify-content: center;
   flex: none;
+  color: var(--on-primary); /* SVG_LOGO 用 currentColor 描边 */
 }
 .logo svg {
   display: block;
@@ -173,7 +188,7 @@ body {
 .chip.on {
   background: var(--primary);
   border-color: var(--primary);
-  color: #fff;
+  color: var(--on-primary);
   font-weight: 600;
 }
 .chips + .step {
@@ -207,7 +222,7 @@ body {
   border: none;
   border-radius: 12px;
   background: var(--primary);
-  color: #fff;
+  color: var(--on-primary);
   font-size: 14px;
   font-weight: 600;
   font-family: inherit;
@@ -393,10 +408,11 @@ body {
   font-size: 14px;
   font-weight: 700;
   border-bottom: 1px solid var(--line);
-  background: #fafcfe;
+  background: var(--folder-bg);
 }
 .folder svg {
   flex: none;
+  color: var(--primary); /* SVG_FOLDER 用 currentColor 描边 */
 }
 summary.folder {
   list-style: none;
@@ -426,7 +442,7 @@ details[open] .chev {
   gap: 6px;
   align-items: center;
   padding: 9px 15px 9px 40px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--row-line);
   font-size: 13px;
 }
 .f-row:last-child {
@@ -519,7 +535,12 @@ footer {
 }
 .skel-head,
 .skel-line {
-  background: linear-gradient(90deg, #e8eef5 25%, #f4f8fc 37%, #e8eef5 63%);
+  background: linear-gradient(
+    90deg,
+    var(--skel-base) 25%,
+    var(--skel-hi) 37%,
+    var(--skel-base) 63%
+  );
   background-size: 400% 100%;
   animation: skel-wave 1.2s ease infinite;
 }
@@ -543,6 +564,7 @@ footer {
 .state-icon svg {
   display: block;
   margin: 0 auto 12px;
+  color: var(--faint); /* 云朵图标描边用 currentColor（dom.ts） */
 }
 .state-title {
   font-size: 15px;
@@ -567,7 +589,7 @@ footer {
   border: none;
   border-radius: 12px;
   background: var(--primary);
-  color: #fff;
+  color: var(--on-primary);
   font-size: 14px;
   font-weight: 600;
   font-family: inherit;
@@ -649,7 +671,7 @@ summary.folder:focus-visible,
     color: var(--primary);
   }
   .folder:hover {
-    background: #f0f6fd;
+    background: var(--folder-hover);
   }
 
   /* 总览：应用结构里 b-group 包在 .array-box 内 → 网格挂在 array-box 上 */
@@ -671,14 +693,14 @@ summary.folder:focus-visible,
   }
   .m-row {
     scrollbar-width: thin;
-    scrollbar-color: #c9d6e4 transparent;
+    scrollbar-color: var(--scrollbar) transparent;
   }
   .m-row::-webkit-scrollbar {
     display: block;
     height: 6px;
   }
   .m-row::-webkit-scrollbar-thumb {
-    background: #c9d6e4;
+    background: var(--scrollbar);
     border-radius: 3px;
   }
   .m-row::-webkit-scrollbar-track {
@@ -757,7 +779,7 @@ summary.folder:focus-visible,
     border-color: var(--primary);
   }
   .f-row.tappable:hover {
-    background: #f4f9fe;
+    background: var(--row-hover);
   }
 }
 
@@ -884,7 +906,7 @@ body.dw-open {
   gap: 9px;
   align-items: flex-start;
   background: var(--busy-soft);
-  border: 1px solid #f2dcb2;
+  border: 1px solid var(--busy-line);
   border-radius: 12px;
   padding: 11px 12px;
   margin: 12px 0 2px;
@@ -898,7 +920,7 @@ body.dw-open {
   font-size: 13px;
   font-weight: 600;
   line-height: 1.55;
-  color: #7c5310;
+  color: var(--busy-deep);
   word-break: break-all;
 }
 .dw-fault small {
@@ -924,7 +946,7 @@ body.dw-open {
   justify-content: space-between;
   gap: 12px;
   padding: 11px 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--row-line);
 }
 .dw-prog:last-child {
   border-bottom: none;
@@ -1054,5 +1076,43 @@ body.dw-open {
   }
   .tappable:active {
     opacity: 1;
+  }
+}
+
+/* =====================================================================
+ * [T5] 系统暗色模式 —— 只重定义令牌，不改上方任何组件规则
+ * 原则：正文/次要文字对比度 ≥ AA（实测值见各令牌注释，基于卡片底 #1a2431）；
+ * 主色提亮保证彩色文字可读；三态色与其 soft 底均有暗色对应；
+ * 卡片/面板/骨架/滚动条/遮罩/抽屉全链路无刺眼浅色块。
+ * 阴影/遮罩维持原 rgba 深色值（暗色下本就低亮度，无刺眼问题）。
+ * ===================================================================== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #141d29; /* 页面画布 / 卡片内的浅控件底（chip、tag、floor、输入框） */
+    --card: #1a2431;
+    --ink: #e6edf6; /* ≈13.9:1 */
+    --sub: #a6b4c6; /* ≈7.3:1 */
+    --faint: #7f92a7; /* ≈4.9:1（弱提示文字也过 AA） */
+    --line: #2a3646;
+    --primary: #5c9df5; /* ≈5.2:1（正文级彩色文字过 AA） */
+    --primary-soft: #1f3355; /* 搜索命中/选区高亮底 */
+    --on-primary: #0e1c30; /* 提亮后的主色实底改配深字（≈6.2:1），亮色下仍为白字 */
+    --idle: #3ecf8e; /* ≈7.8:1 */
+    --idle-soft: #17382b;
+    --busy: #f0a94a; /* ≈7.8:1 */
+    --busy-soft: #3a2d14;
+    --fault: #8a9bae; /* ≈5.0:1 */
+    --fault-soft: #232f3e;
+    --page-bg: #0c121c;
+    --folder-bg: #202b3a;
+    --folder-hover: #26344a;
+    --row-line: #263243;
+    --row-hover: #1f2f47;
+    --skel-base: #263140;
+    --skel-hi: #313e50;
+    --scrollbar: #3d4c60;
+    --busy-line: #6a5320;
+    --busy-deep: #eec27c; /* busy-soft 暗底上的横幅正文（≈7.5:1） */
   }
 }
