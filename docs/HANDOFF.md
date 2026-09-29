@@ -63,6 +63,8 @@
 3. 拿到 token 后：立即实测 goodsExist（判时段墙生死）、spec/item list（判时段表达）、token_expired 实测 TTL
 4. 之后开 grilling 第二轮（时段墙形态/选择器/详情页模板）→ 写 SPEC-2 控制包 → 建 Issues → 派工
 
+> **交接末尾补充（2026-09-29 同日定案）**：register chunk 已分析完毕——`pages-login-register` 是 usemall 商城模板的**死代码残留**（页面原型挂载清单为 `$api/$http/$dict/$mRouter/$store/$env/$config/$iscroll`，无 `$func`），不存在短信注册路径。上文假说 2 的 register 分支判死、建议下一步第 1 条作废。**登录攻坚首选 = 真机抓包**（APK 信任用户 CA，Charles 抓官方 App 短信登录全程，需用户配合）；备选 = APK 反编译挖 `/login/login` 正确参数形状。
+
 ### 实验资产（可复用）
 - 用户实验手机号：139****3991（完整号在会话记录；**不得写入任何入库文件**）
 - H5 bundle 已下载：/tmp/h5_index.js、/tmp/h5_login.js（含 chunk map 可继续挖）
