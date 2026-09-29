@@ -6,7 +6,7 @@
  * ===================================================================== */
 
 import { API_TIMEOUT_MS, BASE_URL, CAMPUS_LAT, CAMPUS_LNG, HEADERS } from "./config";
-import type { DeviceApi, PageData, PositionApi } from "./types";
+import type { DeviceApi, GoodsDetailApi, PageData, PositionApi } from "./types";
 
 /** 未登录类业务错误码（只读链路遇不到；仅用于识别，绝不引导登录——本平台无账号系统） */
 const LOGIN_ERROR_CODES = [2, 401, 100002, 100003];
@@ -138,5 +138,12 @@ export function fetchDeviceDetailPage(
 ) {
   return apiCall<PageData<DeviceApi>>("POST", "/position/deviceDetailPage", {
     body: { positionId, categoryCode, page, floorCode: "", pageSize },
+  });
+}
+
+/** 单机全量详情（含程序与价格，docs §2.5）。抽屉打开时请求一次，不轮询 */
+export function fetchGoodsDetail(deviceId: number) {
+  return apiCall<GoodsDetailApi>("GET", "/goods/normal/details/byDeviceId", {
+    params: { deviceId },
   });
 }

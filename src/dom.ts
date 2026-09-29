@@ -34,3 +34,11 @@ export const SVG_CLOUD_OFF =
 
 export const SVG_CLOUD_ALERT =
   '<svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="#9db0c2" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M17.2 18H7a4.2 4.2 0 0 1-.7-8.35A6 6 0 0 1 16.6 7.8A4.8 4.8 0 0 1 17.2 18z" fill="#f0f3f6"/><path d="M12 10.2v3.6" stroke="#e8951f" stroke-linecap="round"/><circle cx="12" cy="16.2" r="1" fill="#e8951f" stroke="none"/></svg>';
+
+/** lucide「x」（T4 抽屉关闭按钮） */
+export const SVG_X =
+  '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+
+/** lucide「triangle-alert」（T4 抽屉故障横幅） */
+export const SVG_ALERT =
+  '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>';

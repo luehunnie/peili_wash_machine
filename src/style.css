@@ -737,3 +737,322 @@ summary.folder:focus-visible,
     font-size: 15px;
   }
 }
+
+/* =====================================================================
+ * [T4] 单机详情抽屉 —— 纯叠加层（新增区块，不改上方锁定的 V1 规则）
+ * 移动端 = 底部抽屉（圆角顶部 / 最高 75vh / 内部滚动）；
+ * ≥1024px = 居中对话框（max-width 420px）。颜色/圆角全部沿用 V1 令牌。
+ * ===================================================================== */
+
+/* 可点击机器卡 / 明细行（触控目标即卡片本身，天然 ≥44px） */
+.tappable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: rgba(46, 125, 240, 0.14);
+}
+.tappable:active {
+  opacity: 0.82;
+}
+@media (hover: hover) {
+  .m-card.tappable:hover {
+    border-color: var(--primary);
+  }
+  .f-row.tappable:hover {
+    background: #f4f9fe;
+  }
+}
+
+/* 遮罩 + 容器 */
+.dw-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+.dw-overlay.open {
+  display: flex;
+}
+.dw-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 28, 42, 0.45);
+  animation: dw-fade 0.2s ease;
+  touch-action: none;
+}
+body.dw-open {
+  overflow: hidden;
+}
+
+/* 抽屉主体（底部工作表） */
+.dw {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  max-height: 75vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border-radius: var(--radius) var(--radius) 0 0;
+  box-shadow: 0 -6px 30px rgba(23, 41, 60, 0.18);
+  animation: dw-up 0.25s ease;
+}
+
+/* 头部：机器名（照抄原文）+ 类型 + 状态 + 停用徽标 + 关闭 */
+.dw-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 14px 8px 12px 18px;
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+.dw-head-main {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.dw-title {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.45;
+  word-break: break-all;
+}
+.dw-sub {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dw-state {
+  font-size: 12px;
+  font-weight: 600;
+}
+.dw-state.idle {
+  color: var(--idle);
+}
+.dw-state.busy {
+  color: var(--busy);
+}
+.dw-state.fault {
+  color: var(--faint);
+}
+.dw-off {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--sub);
+  background: var(--fault-soft);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+.dw-close {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin: -8px -2px 0 0;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: var(--sub);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.dw-close:active {
+  background: var(--bg);
+}
+
+/* 主体：内部滚动 */
+.dw-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 2px 0 18px;
+}
+.dw-content {
+  padding: 0 18px;
+}
+
+/* 故障横幅（醒目） */
+.dw-fault {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  background: var(--busy-soft);
+  border: 1px solid #f2dcb2;
+  border-radius: 12px;
+  padding: 11px 12px;
+  margin: 12px 0 2px;
+}
+.dw-fault-icon {
+  flex: none;
+  color: var(--busy);
+  margin-top: 2px;
+}
+.dw-fault b {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.55;
+  color: #7c5310;
+  word-break: break-all;
+}
+.dw-fault small {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--faint);
+}
+
+/* 程序小节标题 */
+.dw-sec {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--faint);
+  padding: 12px 0 2px;
+}
+
+/* 程序行：名称 + 描述 | 价格 + 时长 */
+.dw-prog {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.dw-prog:last-child {
+  border-bottom: none;
+}
+.dw-prog-main {
+  min-width: 0;
+  flex: 1;
+}
+.dw-prog-name {
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  word-break: break-all;
+}
+.dw-prog-feature {
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--sub);
+  word-break: break-all;
+}
+.dw-prog-side {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.dw-prog-price {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+.dw-prog-unit {
+  font-size: 11px;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+/* 停用程序：整体压灰（含价格主色） */
+.dw-prog.off .dw-prog-name,
+.dw-prog.off .dw-prog-price,
+.dw-prog.off .dw-prog-unit {
+  color: var(--faint);
+}
+
+/* 空态 / 错误（复用 state-title/state-desc/state-detail/btn-primary） */
+.dw-empty {
+  font-size: 12px;
+  color: var(--faint);
+  text-align: center;
+  padding: 26px 0 16px;
+}
+.dw-error {
+  text-align: center;
+  padding: 26px 14px 10px;
+}
+
+/* 抽屉骨架（复用 skel-line 家族） */
+.skel-line.w-25 {
+  width: 25%;
+}
+.skel-prog .skel-line {
+  margin-top: 5px;
+}
+
+/* 动画 */
+@keyframes dw-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes dw-up {
+  from {
+    transform: translateY(28px);
+    opacity: 0.5;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes dw-pop {
+  from {
+    transform: translateY(10px) scale(0.98);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* 可访问性：焦点可见 */
+.m-card.tappable:focus-visible,
+.f-row.tappable:focus-visible,
+.dw-close:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ≥1024px：居中对话框 */
+@media (min-width: 1024px) {
+  .dw-overlay {
+    align-items: center;
+    padding: 24px;
+  }
+  .dw {
+    border-radius: var(--radius);
+    box-shadow: 0 18px 50px rgba(23, 41, 60, 0.28);
+    max-height: min(75vh, 640px);
+    animation: dw-pop 0.22s ease;
+  }
+}
+
+/* 减少动效 */
+@media (prefers-reduced-motion: reduce) {
+  .dw-mask,
+  .dw {
+    animation: none;
+  }
+  .tappable:active {
+    opacity: 1;
+  }
+}

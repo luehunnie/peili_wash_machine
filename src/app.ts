@@ -7,7 +7,8 @@
 
 import { fetchBuildingMachines, fetchCampusBuildings } from "./campus";
 import { POLL_INTERVAL_MS } from "./config";
-import type { Building } from "./types";
+import { createDrawer } from "./drawer";
+import type { Building, Machine } from "./types";
 import type { CategorySelection, Selection, ShellRefs, ViewHandlers, ViewState } from "./view";
 import {
   renderChips,
@@ -30,6 +31,9 @@ export function initApp(root: HTMLElement): void {
     loading: false,
     openFolders: new Set<number>(),
   };
+
+  // T4：单机详情抽屉（挂 body 的纯叠加层；轮询重渲染不触碰它）
+  const drawer = createDrawer();
 
   const handlers: ViewHandlers = {
     onBuildingChip: (id: Selection) => {
@@ -59,6 +63,7 @@ export function initApp(root: HTMLElement): void {
       else state.openFolders.delete(positionId);
     },
     onRetryBuilding: (positionId: number) => void refreshBuildings([positionId]),
+    onOpenMachine: (m: Machine) => drawer.open(m),
   };
 
   const refs: ShellRefs = renderShell(root, handlers);

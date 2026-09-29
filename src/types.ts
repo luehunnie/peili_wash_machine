@@ -52,3 +52,32 @@ export interface Building {
   categoryCodes: string[];
   machines: Machine[] | null; // null = 尚未成功加载过（首次失败时用错误卡展示）
 }
+
+/* ---------------- 单机全量详情（T4 抽屉） ---------------- */
+
+/** GET /goods/normal/details/byDeviceId 的 items[] 元素（洗衣程序 SKU） */
+export interface GoodsItemApi {
+  id: number;
+  name: string; // 程序名（如「标准」）
+  feature?: string; // 程序描述
+  price?: string | number; // 元（服务端给字符串 "4.00"）
+  unit?: string | number; // 时长分钟（服务端给字符串 "35"）
+  soldState?: number; // 2 = 该程序停用
+}
+
+/**
+ * GET /goods/normal/details/byDeviceId 的 data（docs/api/02_api_data_link.md §2.5）。
+ * ⚠️ 只声明只读展示需要的字段：enableReserve / reserveState / reserveMethod
+ *    属预约冻结禁区（PROJECT_CONTROL_PACKET NON_GOALS），绝不引入、绝不展示。
+ */
+export interface GoodsDetailApi {
+  id: number;
+  categoryCode?: string;
+  categoryName?: string;
+  name: string; // 与列表接口同源；抽屉标题仍以点击卡片时的原文为准
+  soldState?: number; // 2 = 整机停用
+  deviceState?: number; // 1 空闲 / 2 占用 / 3 故障
+  deviceErrorCode?: number | string | null; // 有值 = 故障
+  deviceErrorMsg?: string | null;
+  items?: GoodsItemApi[];
+}

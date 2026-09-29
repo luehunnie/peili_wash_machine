@@ -38,6 +38,8 @@ export interface ViewHandlers {
   onManualRefresh: () => void;
   onToggleFolder: (positionId: number, open: boolean) => void;
   onRetryBuilding: (positionId: number) => void;
+  /** 点击机器（总览卡片 / 明细行）→ 打开单机详情抽屉（T4） */
+  onOpenMachine: (m: Machine) => void;
 }
 
 export interface ShellRefs {
@@ -317,6 +319,21 @@ function stateClass(m: Machine): string {
   return m.state === 1 ? "idle" : m.state === 2 ? "busy" : "fault";
 }
 
+/** 机器卡 / 明细行 → 可点击打开详情抽屉（T4）：纯附加属性，不改锁定结构；键盘可达（Enter/Space） */
+function makeOpenable(node: HTMLElement, m: Machine, h: ViewHandlers): void {
+  node.classList.add("tappable");
+  node.setAttribute("role", "button");
+  node.tabIndex = 0;
+  node.setAttribute("aria-label", `${m.name}，查看程序与价格`);
+  node.addEventListener("click", () => h.onOpenMachine(m));
+  node.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      h.onOpenMachine(m);
+    }
+  });
+}
+
 function stateTextOverview(m: Machine): string {
   if (m.state === 1) return "空闲";
   if (m.state === 2) return remainingLabel(m.finishTime) || "占用中";
@@ -434,6 +451,7 @@ function buildBuildingGroup(
         card.appendChild(top);
         card.appendChild(el("span", "m-name", m.name)); // 照抄原文
         card.appendChild(el("span", "m-state", stateTextOverview(m)));
+        makeOpenable(card, m, h); // T4：点卡片开抽屉
         row.appendChild(card);
       }
     }
@@ -528,7 +546,7 @@ export function renderDetails(refs: ShellRefs, state: ViewState, h: ViewHandlers
       } else {
         for (const m of shown) {
           const hit = q ? machineMatches(m, b, q) : false;
-          grp.appendChild(buildMachineRow(m, hit));
+          grp.appendChild(buildMachineRow(m, hit, h));
         }
       }
     }
@@ -559,7 +577,7 @@ function buildFolderSkeleton(): HTMLElement {
   return grp;
 }
 
-function buildMachineRow(m: Machine, hit: boolean): HTMLElement {
+function buildMachineRow(m: Machine, hit: boolean, h: ViewHandlers): HTMLElement {
   const row = el("div", `f-row${hit ? " hit" : ""}`);
   const main = el("div");
   const tags = el("div", "f-tags");
@@ -583,5 +601,6 @@ function buildMachineRow(m: Machine, hit: boolean): HTMLElement {
     time.textContent = "—";
   }
   row.appendChild(time);
+  makeOpenable(row, m, h); // T4：点行开抽屉
   return row;
 }
